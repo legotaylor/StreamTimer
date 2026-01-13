@@ -1,0 +1,68 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.gradleup.shadow' version '9.3.1'
+}
+
+group = project.group
+appName = project.appName
+version = project.version
+
+application {
+    mainClass = project.main
+}
+
+repositories {
+    mavenCentral()
+    maven { url = "https://maven.quiltmc.org/repository/release/" }
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation("org.quiltmc:quilt-config:${project.quilt_config_version}")
+    implementation("org.quiltmc.quilt-config.serializers:toml:${project.quilt_config_version}")
+    implementation("com.formdev:flatlaf:${project.flatlaf_version}")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+processResources {
+}
+
+jar {
+    manifest {
+        attributes["Implementation-Title"] = name
+        attributes["Implementation-Version"] = version
+        attributes["Main-Class"] = application.mainClass
+    }
+}
+
+shadowJar {
+    manifest {
+        attributes(
+                'Implementation-Title': name,
+                'Implementation-Version': version,
+                'Main-Class': application.mainClass
+        )
+    }
+    mergeServiceFiles()
+}
+
+build.dependsOn shadowJar
+
+run {
+    workingDir = file("${project.projectDir}/run")
+    doFirst {
+        if (!workingDir.exists()) workingDir.mkdirs()
+    }
+    standardOutput = System.out
+    errorOutput = System.err
+    standardInput = System.in
+}
