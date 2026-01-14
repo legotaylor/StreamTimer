@@ -14,7 +14,7 @@ import dev.dannytaylor.streamtimer.timer.TimerUtils;
 
 public class GUI {
     private JFrame frame;
-    public JLabel timerText;
+    public TextRendererPanel timer;
     public JLabel messageText;
     public JButton toggleButton;
     public CountDownLatch latch = new CountDownLatch(1);
@@ -25,24 +25,26 @@ public class GUI {
 
     private void init() {
         System.out.println("[Stream Timer] Launching GUI...");
-        setTheme(frame);
-        frame = new JFrame(StaticVariables.name);
+        setTheme(this.frame);
+        Dimension size = new Dimension(576, 288);
+        this.frame = new JFrame(StaticVariables.name);
 
         JPanel timerPanel = new JPanel();
 
         timerPanel.setBackground(new Color(0x00FF00));
-        timerText = new JLabel(TimerUtils.getTime(StreamTimerConfig.instance.time.value()));
-        timerText.setForeground(new Color(0xffffff));
-        timerText.setFont(timerText.getFont().deriveFont(Font.BOLD, 72f));
-        timerPanel.add(setCentered(timerText));
-        frame.add(timerPanel, BorderLayout.NORTH);
+        timer = new TextRendererPanel();
+        timer.setPreferredSize(new Dimension(576, 144));
+        timer.setBackground(new Color(0x00FF00));
+        timerPanel.add(this.timer);
+
+        this.frame.add(timerPanel, BorderLayout.NORTH);
 
         JPanel settingsPanel = new JPanel();
         settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
 
         JPanel togglePanel = new JPanel();
-        toggleButton = new JButton("START");
-        toggleButton.addActionListener(new AbstractAction() {
+        this.toggleButton = new JButton("START");
+        this.toggleButton.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (StreamTimerMain.timer.isRunning()) {
@@ -56,7 +58,7 @@ public class GUI {
                 }
             }
         });
-        toggleButton.addFocusListener(new FocusListener() {
+        this.toggleButton.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
             }
@@ -66,7 +68,7 @@ public class GUI {
                 messageText.setText("⠀");
             }
         });
-        togglePanel.add(toggleButton);
+        togglePanel.add(this.toggleButton);
         settingsPanel.add(togglePanel);
 
         JPanel timerSettings = new JPanel();
@@ -145,30 +147,29 @@ public class GUI {
 
         settingsPanel.add(timerSettings);
 
-        frame.add(settingsPanel, BorderLayout.CENTER);
+        this.frame.add(settingsPanel, BorderLayout.CENTER);
 
         JPanel messagePanel = new JPanel();
-        messagePanel.add(messageText = new JLabel("⠀"));
-        frame.add(messagePanel, BorderLayout.SOUTH);
+        messagePanel.add(this.messageText = new JLabel("⠀"));
+        this.frame.add(messagePanel, BorderLayout.SOUTH);
 
-        frame.pack();
-        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        Dimension size = new Dimension(576, 288);
-        frame.setMinimumSize(size);
-        frame.setSize(size.width, size.height);
-        frame.setResizable(false);
+        this.frame.pack();
+        this.frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        this.frame.setMinimumSize(size);
+        this.frame.setSize(size.width, size.height);
+        this.frame.setResizable(false);
 
         try {
             ImageIcon logo = Texture.getTexture(this.getClass().getResource(StaticVariables.logo), 64, 64);
-            if (logo != null) frame.setIconImage(logo.getImage());
+            if (logo != null) this.frame.setIconImage(logo.getImage());
         } catch (Exception error) {
             System.err.println("[Stream Timer] Failed to set icon: " + error);
         }
 
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        this.frame.setLocationRelativeTo(null);
+        this.frame.setVisible(true);
 
-        frame.addWindowListener(new WindowListener() {
+        this.frame.addWindowListener(new WindowListener() {
             public void windowOpened(WindowEvent e) {
             }
             public void windowClosing(WindowEvent e) {
@@ -187,7 +188,7 @@ public class GUI {
             }
         });
 
-        latch.countDown();
+        this.latch.countDown();
     }
 
     public JLabel setCentered(JLabel label) {
@@ -217,7 +218,8 @@ public class GUI {
 
     public void updateTimer() {
         String time = TimerUtils.getTime();
-        if (!timerText.getText().equals(time)) timerText.setText(time);
+        //if (!timerText.getText().equals(time)) timerText.setText(time);
+        this.timer.setImage(StreamTimerMain.textRenderer.render(time));
 
         if (StreamTimerMain.timer.isRunning() && TimerUtils.getMillis() <= 0) {
             StreamTimerMain.timer.stop();

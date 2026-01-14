@@ -2,12 +2,14 @@ package dev.dannytaylor.streamtimer;
 
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.gui.GUI;
+import dev.dannytaylor.streamtimer.gui.TextRenderer;
 import dev.dannytaylor.streamtimer.timer.Timer;
 
 public class StreamTimerMain {
     public static boolean running = true;
     public static Timer timer = new Timer();
     public static GUI gui = new GUI();
+    public static TextRenderer textRenderer = new TextRenderer(576, 144);
 
     public static void main(String[] args) {
         try {
