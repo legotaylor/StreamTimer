@@ -1,4 +1,4 @@
-package dev.dannytaylor.streamtimer.gui;
+package dev.dannytaylor.streamtimer.render;
 
 import dev.dannytaylor.streamtimer.data.StaticVariables;
 

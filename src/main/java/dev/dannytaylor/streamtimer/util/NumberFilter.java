@@ -1,4 +1,4 @@
-package dev.dannytaylor.streamtimer.gui;
+package dev.dannytaylor.streamtimer.util;
 
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;

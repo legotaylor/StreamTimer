@@ -1,4 +1,4 @@
-package dev.dannytaylor.streamtimer.gui;
+package dev.dannytaylor.streamtimer.render;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import dev.dannytaylor.streamtimer.StreamTimerMain;
@@ -11,6 +11,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.concurrent.CountDownLatch;
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
+import dev.dannytaylor.streamtimer.util.NumberFilter;
 
 public class GUI {
     private JFrame frame;
@@ -26,16 +27,18 @@ public class GUI {
     private void init() {
         System.out.println("[Stream Timer] Launching GUI...");
         setTheme(this.frame);
-        Dimension size = new Dimension(576, 288);
+        Dimension size = new Dimension(576, 320);
         this.frame = new JFrame(StaticVariables.name);
+        this.frame.setLayout(new BorderLayout());
 
         JPanel timerPanel = new JPanel();
+        timerPanel.setLayout(new BorderLayout());
 
-        timerPanel.setBackground(new Color(0x00FF00));
-        timer = new TextRendererPanel();
-        timer.setPreferredSize(new Dimension(576, 144));
-        timer.setBackground(new Color(0x00FF00));
-        timerPanel.add(this.timer);
+        timerPanel.setBackground(new Color(StreamTimerConfig.instance.backgroundColor.value()));
+        this.timer = new TextRendererPanel();
+        this.timer.setPreferredSize(new Dimension(576, 144));
+        this.timer.setBackground(new Color(StreamTimerConfig.instance.backgroundColor.value()));
+        timerPanel.add(this.timer, BorderLayout.CENTER);
 
         this.frame.add(timerPanel, BorderLayout.NORTH);
 
@@ -68,20 +71,20 @@ public class GUI {
                 messageText.setText("⠀");
             }
         });
-        togglePanel.add(this.toggleButton);
+        togglePanel.add(setCentered(this.toggleButton));
         settingsPanel.add(togglePanel);
 
         JPanel timerSettings = new JPanel();
 
-        JTextField hours = new JTextField("01", 2);
+        JTextField hours = new JTextField(StreamTimerConfig.instance.addHours.value(), 2);
         ((AbstractDocument)hours.getDocument()).setDocumentFilter(new NumberFilter());
         timerSettings.add(hours);
         timerSettings.add(new JLabel(":"));
-        JTextField minutes = new JTextField("00", 2);
+        JTextField minutes = new JTextField(StreamTimerConfig.instance.addMinutes.value(), 2);
         ((AbstractDocument)minutes.getDocument()).setDocumentFilter(new NumberFilter());
         timerSettings.add(minutes);
         timerSettings.add(new JLabel(":"));
-        JTextField seconds = new JTextField("00", 2);
+        JTextField seconds = new JTextField(StreamTimerConfig.instance.addSeconds.value(), 2);
         ((AbstractDocument)seconds.getDocument()).setDocumentFilter(new NumberFilter());
         timerSettings.add(seconds);
 
@@ -146,7 +149,7 @@ public class GUI {
         timerSettings.add(setButton);
 
         settingsPanel.add(timerSettings);
-
+        settingsPanel.setPreferredSize(new Dimension(576, 176));
         this.frame.add(settingsPanel, BorderLayout.CENTER);
 
         JPanel messagePanel = new JPanel();
@@ -191,11 +194,14 @@ public class GUI {
         this.latch.countDown();
     }
 
-    public JLabel setCentered(JLabel label) {
-        label.setAlignmentX(Component.CENTER_ALIGNMENT);
-        label.setHorizontalAlignment(SwingConstants.CENTER);
-        label.setVerticalAlignment(SwingConstants.CENTER);
-        return label;
+    public JComponent setCentered(JComponent component) {
+        component.setAlignmentX(Component.CENTER_ALIGNMENT);
+        if (component instanceof JLabel) {
+            JLabel label = ((JLabel)component);
+            label.setHorizontalAlignment(SwingConstants.CENTER);
+            label.setVerticalAlignment(SwingConstants.CENTER);
+        }
+        return component;
     }
 
     private void setTheme(Frame frame) {
@@ -217,9 +223,7 @@ public class GUI {
     }
 
     public void updateTimer() {
-        String time = TimerUtils.getTime();
-        //if (!timerText.getText().equals(time)) timerText.setText(time);
-        this.timer.setImage(StreamTimerMain.textRenderer.render(time));
+        this.timer.setImage(StreamTimerMain.textRenderer.getFramebuffer());
 
         if (StreamTimerMain.timer.isRunning() && TimerUtils.getMillis() <= 0) {
             StreamTimerMain.timer.stop();

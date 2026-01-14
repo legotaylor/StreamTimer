@@ -1,9 +1,10 @@
 package dev.dannytaylor.streamtimer;
 
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
-import dev.dannytaylor.streamtimer.gui.GUI;
-import dev.dannytaylor.streamtimer.gui.TextRenderer;
+import dev.dannytaylor.streamtimer.render.GUI;
+import dev.dannytaylor.streamtimer.render.TextRenderer;
 import dev.dannytaylor.streamtimer.timer.Timer;
+import dev.dannytaylor.streamtimer.timer.TimerUtils;
 
 public class StreamTimerMain {
     public static boolean running = true;
@@ -42,6 +43,7 @@ public class StreamTimerMain {
 
     public static void tick() {
         timer.tick();
+        StreamTimerMain.textRenderer.render(TimerUtils.getTime());
         gui.updateTimer();
     }
 }

@@ -1,6 +1,7 @@
 package dev.dannytaylor.streamtimer.timer;
 
 import dev.dannytaylor.streamtimer.StreamTimerMain;
+import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 
 public class TimerUtils {
     public static String getTime(long millis) {
@@ -35,15 +36,22 @@ public class TimerUtils {
         long h = 0;
         try {
             h = Integer.parseInt(hours);
-        } catch (NumberFormatException numberError) {} // it's probably just empty.
+        } catch (NumberFormatException numberError) {
+            hours = StreamTimerConfig.instance.addHours.getDefaultValue();
+        } // it's probably just empty.
         long m = 0;
         try {
             m = Integer.parseInt(minutes);
-        } catch (NumberFormatException numberError) {} // it's probably just empty.
+        } catch (NumberFormatException numberError) {
+            minutes = StreamTimerConfig.instance.addMinutes.getDefaultValue();
+        } // it's probably just empty.
         long s = 0;
         try {
             s = Integer.parseInt(seconds);
-        } catch (NumberFormatException numberError) {} // it's probably just empty.
+        } catch (NumberFormatException numberError) {
+            seconds = StreamTimerConfig.instance.addSeconds.getDefaultValue();
+        } // it's probably just empty.
+        updateConfig(hours, minutes, seconds);
         return getSeconds(h, m, s);
     }
 
@@ -61,5 +69,24 @@ public class TimerUtils {
             s = Integer.parseInt(seconds);
         } catch (NumberFormatException numberError) {} // it's probably just empty.
         return String.format("%02d:%02d:%02d", h, m, s);
+    }
+
+    public static void updateConfig(String hours, String minutes, String seconds) {
+        long h = 0;
+        try {
+            h = Integer.parseInt(hours);
+        } catch (NumberFormatException numberError) {} // it's probably just empty.
+        long m = 0;
+        try {
+            m = Integer.parseInt(minutes);
+        } catch (NumberFormatException numberError) {} // it's probably just empty.
+        long s = 0;
+        try {
+            s = Integer.parseInt(seconds);
+        } catch (NumberFormatException numberError) {} // it's probably just empty.
+        StreamTimerConfig.instance.addHours.setValue(String.format("%02d", h), false);
+        StreamTimerConfig.instance.addMinutes.setValue(String.format("%02d", m), false);
+        StreamTimerConfig.instance.addSeconds.setValue(String.format("%02d", s), false);
+        StreamTimerConfig.instance.save();
     }
 }
