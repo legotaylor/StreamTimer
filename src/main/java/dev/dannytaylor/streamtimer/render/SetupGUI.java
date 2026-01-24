@@ -39,10 +39,10 @@ public class SetupGUI {
             JPanel buttonsPanel = new JPanel();
             buttonsPanel.setLayout(new BorderLayout());
 
-            JButton frameMode = new JButton("Open as Frame");
+            JButton frameMode = GUIWidgets.createButton("Open as Frame");
             frameMode.setToolTipText("Runs as a frame. This won't always prevent minimizing, and you'll see the icon in your taskbar.");
 
-            JButton dialogMode = new JButton("Open as Dialog");
+            JButton dialogMode = GUIWidgets.createButton("Open as Dialog");
             dialogMode.setToolTipText("Runs as a dialog. This prevents minimising, however you will have use the tray icon to bring the window to the front.");
 
             frameMode.addActionListener(l -> {
@@ -58,7 +58,7 @@ public class SetupGUI {
             });
 
             JPanel dontShowAgainPanel = new JPanel();
-            JCheckBox dontShowAgain = new JCheckBox();
+            JCheckBox dontShowAgain = GUIWidgets.createCheckbox();
             dontShowAgain.addChangeListener(l -> StreamTimerConfig.instance.skipSetupScreen.setValue(dontShowAgain.isSelected(), true));
             dontShowAgainPanel.add(dontShowAgain);
             dontShowAgainPanel.add(new JLabel("Don't show this screen again!"));

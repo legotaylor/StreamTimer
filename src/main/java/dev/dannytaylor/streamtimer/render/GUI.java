@@ -60,7 +60,7 @@ public class GUI {
         settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
 
         JPanel togglePanel = new JPanel();
-        this.toggleButton = new JButton("START");
+        this.toggleButton = GUIWidgets.createButton("START");
         this.toggleButton.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -90,19 +90,19 @@ public class GUI {
 
         JPanel timerSettings = new JPanel();
 
-        JTextField hours = new JTextField(StreamTimerConfig.instance.addHours.value(), 2);
+        JTextField hours = GUIWidgets.createText(StreamTimerConfig.instance.addHours.value(), 2);
         ((AbstractDocument)hours.getDocument()).setDocumentFilter(new NumberFilter());
         timerSettings.add(hours);
         timerSettings.add(new JLabel(":"));
-        JTextField minutes = new JTextField(StreamTimerConfig.instance.addMinutes.value(), 2);
+        JTextField minutes = GUIWidgets.createText(StreamTimerConfig.instance.addMinutes.value(), 2);
         ((AbstractDocument)minutes.getDocument()).setDocumentFilter(new NumberFilter());
         timerSettings.add(minutes);
         timerSettings.add(new JLabel(":"));
-        JTextField seconds = new JTextField(StreamTimerConfig.instance.addSeconds.value(), 2);
+        JTextField seconds = GUIWidgets.createText(StreamTimerConfig.instance.addSeconds.value(), 2);
         ((AbstractDocument)seconds.getDocument()).setDocumentFilter(new NumberFilter());
         timerSettings.add(seconds);
 
-        JButton addButton = new JButton("ADD");
+        JButton addButton = GUIWidgets.createButton("ADD");
         addButton.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -122,7 +122,7 @@ public class GUI {
         });
         timerSettings.add(addButton);
 
-        JButton removeButton = new JButton("SUBTRACT");
+        JButton removeButton = GUIWidgets.createButton("SUBTRACT");
         removeButton.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -142,7 +142,7 @@ public class GUI {
         });
         timerSettings.add(removeButton);
 
-        JButton setButton = new JButton("SET");
+        JButton setButton = GUIWidgets.createButton("SET");
         setButton.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -165,7 +165,7 @@ public class GUI {
         settingsPanel.add(timerSettings);
 
         JPanel forceFocusSettings = new JPanel();
-        JCheckBox forceFocus = new JCheckBox();
+        JCheckBox forceFocus = GUIWidgets.createCheckbox();
         forceFocus.setSelected(StreamTimerConfig.instance.forceFocus.value());
         forceFocus.addChangeListener(listener -> {
             StreamTimerConfig.instance.forceFocus.setValue(forceFocus.isSelected(), true);
@@ -219,6 +219,7 @@ public class GUI {
             public void windowIconified(WindowEvent e) {
                 if (window instanceof JFrame) {
                     JFrame frame = (JFrame) window;
+                    frame.setVisible(true);
                     if (StreamTimerConfig.instance.forceFocus.value()) {
                         frame.setExtendedState(Frame.NORMAL);
                         frame.requestFocus();
