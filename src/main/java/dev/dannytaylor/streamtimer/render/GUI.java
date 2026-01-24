@@ -149,6 +149,18 @@ public class GUI {
         timerSettings.add(setButton);
 
         settingsPanel.add(timerSettings);
+
+        JPanel forceFocusSettings = new JPanel();
+        JCheckBox forceFocus = new JCheckBox();
+        forceFocus.setSelected(StreamTimerConfig.instance.forceFocus.value());
+        forceFocus.addChangeListener(listener -> {
+            StreamTimerConfig.instance.forceFocus.setValue(forceFocus.isSelected(), true);
+        });
+        forceFocusSettings.add(new JLabel("Prevent minimize"));
+        forceFocusSettings.add(forceFocus);
+        setCentered(forceFocusSettings);
+
+        settingsPanel.add(forceFocusSettings);
         settingsPanel.setPreferredSize(new Dimension(576, 176));
         this.frame.add(settingsPanel, BorderLayout.CENTER);
 
@@ -182,6 +194,10 @@ public class GUI {
             public void windowClosed(WindowEvent e) {
             }
             public void windowIconified(WindowEvent e) {
+                if (StreamTimerConfig.instance.forceFocus.value()) {
+                    frame.setExtendedState(Frame.NORMAL);
+                    frame.requestFocus();
+                }
             }
             public void windowDeiconified(WindowEvent e) {
             }

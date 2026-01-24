@@ -11,6 +11,8 @@ public class StreamTimerConfig extends ReflectiveConfig {
         System.out.println("[Stream Timer] Initialized Config");
     }
 
+    public final TrackedValue<Boolean> forceFocus = this.value(true);
+
     public final TrackedValue<Long> time = this.value(21600000L);
 
     public final TrackedValue<Integer> backgroundColor = this.value(0x00FF00);
