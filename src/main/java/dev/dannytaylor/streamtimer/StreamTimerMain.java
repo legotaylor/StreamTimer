@@ -43,7 +43,8 @@ public class StreamTimerMain {
 
     public static void tick() {
         timer.tick();
-        StreamTimerMain.textRenderer.render(TimerUtils.getTime());
-        gui.updateTimer();
+        String time = TimerUtils.getTime();
+        StreamTimerMain.textRenderer.render(time);
+        gui.updateTimer(time);
     }
 }
