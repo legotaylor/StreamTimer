@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.nio.file.Path;
 
 public class SetupGUI {
     private JFrame frame;
@@ -54,17 +55,15 @@ public class SetupGUI {
             legacyMode.setToolTipText("Opens using the legacy rendering system. Features requiring OpenGL will not be available!");
 
             frameModeGL.addActionListener(l -> {
-                StreamTimerConfig.instance.previousRenderMode.setValue(RenderMode.GL_FRAME, true);
                 frameModeGL.setEnabled(false);
                 dialogModeGL.setEnabled(false);
-                launch(legacyMode.isSelected() ? RenderMode.TEXT_FRAME : RenderMode.GL_FRAME);
+                launch(RenderMode.GL_FRAME);
             });
 
             dialogModeGL.addActionListener(l -> {
-                StreamTimerConfig.instance.previousRenderMode.setValue(RenderMode.GL_DIALOG, true);
                 frameModeGL.setEnabled(false);
                 dialogModeGL.setEnabled(false);
-                launch(legacyMode.isSelected() ? RenderMode.TEXT_DIALOG : RenderMode.GL_DIALOG);
+                launch(RenderMode.GL_DIALOG);
             });
 
             JPanel legacyModePanel = new JPanel();
@@ -138,6 +137,16 @@ public class SetupGUI {
     private void launch(RenderMode renderMode) {
         StreamTimerConfig.instance.previousRenderMode.setValue(renderMode, true);
         this.frame.setVisible(false);
-        StreamTimerMain.gui.init(renderMode);
+
+        RenderMode verifiedRenderMode = renderMode;
+        if (renderMode.usesGL()) {
+            if (!Path.of(StaticVariables.name + "Assets/vertex.glsl").toFile().exists() || !Path.of(StaticVariables.name + "Assets/fragment.glsl").toFile().exists()) {
+                if (renderMode.getRenderType().equals(RenderMode.RenderType.FRAME)) verifiedRenderMode = RenderMode.TEXT_FRAME;
+                else if (renderMode.getRenderType().equals(RenderMode.RenderType.DIALOG)) verifiedRenderMode = RenderMode.TEXT_DIALOG;
+                StreamTimerMain.gui.initMessageText = "Failed to load assets: Using legacy renderer instead!";
+            }
+        }
+
+        StreamTimerMain.gui.init(verifiedRenderMode);
     }
 }

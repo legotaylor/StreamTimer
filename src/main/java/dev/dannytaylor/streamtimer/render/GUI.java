@@ -20,6 +20,7 @@ import dev.dannytaylor.streamtimer.util.NumberFilter;
 public class GUI {
     public Window window;
     public JPanel timer;
+    public String initMessageText = "⠀";
     public JLabel messageText;
     public JButton toggleButton;
 
@@ -217,7 +218,7 @@ public class GUI {
         this.window.add(settingsPanel, BorderLayout.CENTER);
 
         JPanel messagePanel = new JPanel();
-        messagePanel.add(this.messageText = new JLabel("⠀"));
+        messagePanel.add(this.messageText = new JLabel(this.initMessageText));
         this.window.add(messagePanel, BorderLayout.SOUTH);
 
         this.window.pack();

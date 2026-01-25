@@ -2,41 +2,78 @@ package dev.dannytaylor.streamtimer;
 
 import dev.dannytaylor.streamtimer.data.StaticVariables;
 
-import java.io.File;
 import java.io.InputStream;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Stream;
 
 public class StreamTimerResources {
+    private static final String location = "assets/streamtimer/export/";
+
     public static void extract() {
         try {
-            Path jarPath = Paths.get(StreamTimerResources.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-            Path jarDir = jarPath.getParent();
-            Path outputDir = jarDir.resolve(StaticVariables.name + "Assets");
-            Files.createDirectories(outputDir);
-            try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-                Enumeration<JarEntry> entries = jarFile.entries();
-                while (entries.hasMoreElements()) {
-                    JarEntry entry = entries.nextElement();
-                    String name = entry.getName();
-                    if (!name.startsWith("assets/streamtimer/export/")) continue;
-                    Path outPath = outputDir.resolve(name.substring("assets/streamtimer/export/".length()));
-                    if (entry.isDirectory()) Files.createDirectories(outPath);
-                    else {
-                        Files.createDirectories(outPath.getParent());
-                        try (InputStream in = jarFile.getInputStream(entry)) {
-                            if (!new File(outPath.toUri()).exists()) Files.copy(in, outPath, StandardCopyOption.REPLACE_EXISTING);
+            Path outDir = Path.of(StaticVariables.name + "Assets");
+            Files.createDirectories(outDir);
+            ClassLoader loader = StreamTimerResources.class.getClassLoader();
+            URL locationUrl = loader.getResource(location);
+            if (locationUrl == null) throw new RuntimeException("Assets not found: " + location);
+            if ("jar".equals(locationUrl.getProtocol())) extractFromJar(locationUrl, outDir);
+            else extractFromFileSystem(Path.of(locationUrl.toURI()), outDir);
+        } catch (Exception error) {
+            System.err.println("Failed to copy assets: " + error);
+        }
+    }
+
+    private static void extractFromJar(URL resourceUrl, Path outputDir) {
+        String jarPath = resourceUrl.getPath().substring(5, resourceUrl.getPath().indexOf("!"));
+        jarPath = URLDecoder.decode(jarPath, StandardCharsets.UTF_8);
+        try (JarFile jar = new JarFile(jarPath)) {
+            Enumeration<JarEntry> entries = jar.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry entry = entries.nextElement();
+                String name = entry.getName();
+                if (!name.startsWith(location)) continue;
+                Path outPath = outputDir.resolve(name.substring(location.length()));
+                if (entry.isDirectory()) Files.createDirectories(outPath);
+                else {
+                    try (InputStream in = jar.getInputStream(entry)) {
+                        if (!outPath.toFile().exists()) {
+                            Files.createDirectories(outPath.getParent());
+                            Files.copy(in, outPath, StandardCopyOption.REPLACE_EXISTING);
                         }
                     }
                 }
             }
         } catch (Exception error) {
-            System.err.println("Failed to copy assets: " + error);
+            System.err.println("Failed to copy assets from jar: " + error);
+        }
+    }
+
+    private static void extractFromFileSystem(Path sourceDir, Path outputDir) {
+        try (Stream<Path> files = Files.walk(sourceDir)) {
+            files.forEach(path -> {
+                try {
+                    Path outPath = outputDir.resolve(sourceDir.relativize(path).toString());
+                    if (Files.isDirectory(path)) Files.createDirectories(outPath);
+                    else {
+                        if (!outPath.toFile().exists()) {
+                            Files.createDirectories(outPath.getParent());
+                            Files.copy(path, outPath, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (Exception error) {
+            System.err.println("Failed to copy assets from file system: " + error);
         }
     }
 }
