@@ -4,12 +4,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-public class TextRendererPanel extends JPanel {
+public class TextRendererPanel extends JPanel implements TimerPanel {
     private BufferedImage image;
 
     public void setImage(BufferedImage image) {
         this.image = image;
-        repaint();
     }
 
     @Override
@@ -31,5 +30,10 @@ public class TextRendererPanel extends JPanel {
             int y = (panelHeight - height) / 2;
             graphics.drawImage(image, x, y, width, height, null);
         }
+    }
+
+    @Override
+    public void update() {
+        repaint();
     }
 }

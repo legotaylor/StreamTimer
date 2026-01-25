@@ -5,8 +5,12 @@ import javax.swing.text.Document;
 import java.awt.*;
 
 public class GUIWidgets {
+    public static JCheckBox createCheckbox(String name) {
+        return (JCheckBox) setHandCursor(new JCheckBox(name));
+    }
+
     public static JCheckBox createCheckbox() {
-        return (JCheckBox) setHandCursor(new JCheckBox());
+        return createCheckbox(null);
     }
 
     public static JButton createButton() {

@@ -1,5 +1,6 @@
 package dev.dannytaylor.streamtimer.timer;
 
+import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 
 public class Timer {
@@ -15,10 +16,17 @@ public class Timer {
             lastTickTime = 0;
             return;
         }
-        if (time <= 0) {
-            this.running = false;
+        if (this.time < 0) {
             this.time = 0;
-            return;
+        }
+        if (this.time == 0) {
+            if (!StreamTimerConfig.instance.reversed.value()) {
+                this.running = false;
+                this.time = 0;
+                StreamTimerMain.gui.messageText.setText("Timer finished!");
+                StreamTimerMain.gui.toggleButton.setText("START");
+                return;
+            }
         }
 
         long now = System.currentTimeMillis();
@@ -28,7 +36,7 @@ public class Timer {
         }
 
         long delta = now - this.lastTickTime;
-        this.time -= delta;
+        this.time = StreamTimerConfig.instance.reversed.value() ? this.time + delta : this.time - delta;
         this.lastTickTime = now;
     }
 

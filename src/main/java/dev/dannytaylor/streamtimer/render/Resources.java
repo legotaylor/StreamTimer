@@ -6,7 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
 
-public class Texture {
+public class Resources {
     public static ImageIcon getTexture(URL location) {
         return getTexture(location, getMissing());
     }
@@ -30,6 +30,10 @@ public class Texture {
     }
 
     public static URL getMissing() {
-        return Texture.class.getResource("/assets/" + StaticVariables.id + "/missing.png");
+        return Resources.class.getResource("/assets/" + StaticVariables.id + "/missing.png");
+    }
+
+    public static URL getShader(String filename) {
+        return Resources.class.getResource("/assets/" + StaticVariables.id + "/shaders/" + filename);
     }
 }

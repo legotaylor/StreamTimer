@@ -1,7 +1,10 @@
 package dev.dannytaylor.streamtimer.render;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
+import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLProfile;
 import dev.dannytaylor.streamtimer.StreamTimerMain;
+import dev.dannytaylor.streamtimer.config.RenderMode;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
 
@@ -10,12 +13,13 @@ import javax.swing.text.AbstractDocument;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.concurrent.CountDownLatch;
+
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
 import dev.dannytaylor.streamtimer.util.NumberFilter;
 
 public class GUI {
-    private Window window;
-    public TextRendererPanel timer;
+    public Window window;
+    public JPanel timer;
     public JLabel messageText;
     public JButton toggleButton;
 
@@ -35,21 +39,21 @@ public class GUI {
 
     public void setup() {
         setTheme(this.window);
-        this.icon = Texture.getTexture(this.getClass().getResource(StaticVariables.logo), 64, 64);
+        this.icon = Resources.getTexture(this.getClass().getResource(StaticVariables.logo), 64, 64);
     }
 
-    public void init(boolean dialog) {
+    public void init(RenderMode renderMode) {
         System.out.println("[Stream Timer] Launching GUI...");
         Dimension size = new Dimension(576, 320);
-        this.window = dialog ? new JDialog((Frame) null, StaticVariables.name) : new JFrame(StaticVariables.name);
+        boolean isDialog = renderMode.getRenderType().equals(RenderMode.RenderType.DIALOG);
+        this.window = isDialog ? new JDialog((Frame) null, StaticVariables.name) : new JFrame(StaticVariables.name);
         this.window.setLayout(new BorderLayout());
         initTrayIcon();
 
         JPanel timerPanel = new JPanel();
         timerPanel.setLayout(new BorderLayout());
-
         timerPanel.setBackground(new Color(StreamTimerConfig.instance.backgroundColor.value()));
-        this.timer = new TextRendererPanel();
+        this.timer = renderMode.usesGL() ? new GLRendererPanel(new GLCapabilities(GLProfile.get(GLProfile.GL2))) : new TextRendererPanel();
         this.timer.setPreferredSize(new Dimension(576, 144));
         this.timer.setBackground(new Color(StreamTimerConfig.instance.backgroundColor.value()));
         timerPanel.add(this.timer, BorderLayout.CENTER);
@@ -164,18 +168,51 @@ public class GUI {
 
         settingsPanel.add(timerSettings);
 
-        JPanel forceFocusSettings = new JPanel();
-        JCheckBox forceFocus = GUIWidgets.createCheckbox();
-        forceFocus.setSelected(StreamTimerConfig.instance.forceFocus.value());
-        forceFocus.addChangeListener(listener -> {
-            StreamTimerConfig.instance.forceFocus.setValue(forceFocus.isSelected(), true);
-        });
-        if (!dialog) {
-            forceFocusSettings.add(new JLabel("Prevent minimize"));
-            forceFocusSettings.add(forceFocus);
-            setCentered(forceFocusSettings);
-            settingsPanel.add(forceFocusSettings);
+        JPanel extraSettings = new JPanel();
+        if (!isDialog) {
+            JCheckBox forceFocus = GUIWidgets.createCheckbox("Prevent minimize");
+            forceFocus.setSelected(StreamTimerConfig.instance.forceFocus.value());
+            forceFocus.addChangeListener(listener -> {
+                StreamTimerConfig.instance.forceFocus.setValue(forceFocus.isSelected(), true);
+            });
+            extraSettings.add(forceFocus);
+            setCentered(extraSettings);
+            settingsPanel.add(extraSettings);
         }
+
+        if (this.timer instanceof GLRendererPanel) {
+//            JCheckBox spout = GUIWidgets.createCheckbox("Spout Broadcasting");
+//            spout.setSelected(StreamTimerConfig.instance.spout.value());
+//            spout.addChangeListener(listener -> {
+//                StreamTimerConfig.instance.spout.setValue(spout.isSelected(), true);
+//            });
+//            extraSettings.add(spout);
+
+            JCheckBox reversed = GUIWidgets.createCheckbox("Count up");
+            reversed.setSelected(StreamTimerConfig.instance.reversed.value());
+            reversed.addChangeListener(listener -> {
+                StreamTimerConfig.instance.reversed.setValue(reversed.isSelected(), true);
+            });
+            extraSettings.add(reversed);
+
+            JCheckBox background = GUIWidgets.createCheckbox("Render Background");
+            background.setSelected(StreamTimerConfig.instance.background.value());
+            background.addChangeListener(listener -> {
+                StreamTimerConfig.instance.background.setValue(background.isSelected(), true);
+            });
+            extraSettings.add(background);
+
+            JCheckBox rainbow = GUIWidgets.createCheckbox("Rainbow Mode");
+            rainbow.setSelected(StreamTimerConfig.instance.rainbow.value());
+            rainbow.addChangeListener(listener -> {
+                StreamTimerConfig.instance.rainbow.setValue(rainbow.isSelected(), true);
+            });
+            extraSettings.add(rainbow);
+        }
+
+        setCentered(extraSettings);
+        settingsPanel.add(extraSettings);
+
         settingsPanel.setPreferredSize(new Dimension(576, 176));
         this.window.add(settingsPanel, BorderLayout.CENTER);
 
@@ -193,9 +230,9 @@ public class GUI {
         this.window.setSize(size.width, size.height);
 
         if (this.window instanceof JFrame) {
-            ((JFrame)this.window).setResizable(false);
+            //((JFrame)this.window).setResizable(false);
         } else if (this.window instanceof JDialog) {
-            ((JDialog)this.window).setResizable(false);
+            //((JDialog)this.window).setResizable(false);
         }
 
         try {
@@ -266,15 +303,12 @@ public class GUI {
     }
 
     public void updateTimer(String time) {
-        this.timer.setImage(StreamTimerMain.textRenderer.getFramebuffer());
+        if (this.timer instanceof TimerPanel) {
+            if (this.timer instanceof TextRendererPanel) ((TextRendererPanel) this.timer).setImage(StreamTimerMain.textRenderer.getFramebuffer());
+            ((TimerPanel) this.timer).update();
+        }
         if (time != null) {
             if (this.trayIcon != null) this.trayIcon.setToolTip(time);
-        }
-
-        if (StreamTimerMain.timer.isRunning() && TimerUtils.getMillis() <= 0) {
-            StreamTimerMain.timer.stop();
-            messageText.setText("Timer finished!");
-            toggleButton.setText("START");
         }
     }
 

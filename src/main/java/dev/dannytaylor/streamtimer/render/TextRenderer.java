@@ -12,14 +12,12 @@ public class TextRenderer {
     private final Font font;
 
     private final BufferedImage framebuffer;
-    private final ByteBuffer byteBuffer;
 
     public TextRenderer(int width, int height) {
         this.width = width;
         this.height = height;
         this.font = new Font(StreamTimerConfig.instance.font.value(), StreamTimerConfig.instance.style.value(), StreamTimerConfig.instance.size.value());
         this.framebuffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        this.byteBuffer = ByteBuffer.allocateDirect(4 * width * height);
     }
 
     public void render(String timeText) {
@@ -41,23 +39,22 @@ public class TextRenderer {
 
         graphics.drawString(timeText, x, y);
         graphics.dispose();
-        updateByteBuffer();
     }
 
-    private void updateByteBuffer() {
-        this.byteBuffer.clear();
-        BufferedImage framebuffer = getFramebuffer();
+    public void updateByteBuffer(ByteBuffer buffer) {
+        buffer.clear();
+        BufferedImage framebuffer = this.getFramebuffer();
         int width = framebuffer.getWidth();
         int height = framebuffer.getHeight();
         int[] pixels = new int[width * height];
         framebuffer.getRGB(0, 0, width, height, pixels, 0, width);
         for (int pixel : pixels) {
-            this.byteBuffer.put((byte) ((pixel >> 16) & 0xFF)); // Red
-            this.byteBuffer.put((byte) ((pixel >> 8) & 0xFF)); // Green
-            this.byteBuffer.put((byte) (pixel & 0xFF)); // Blue
-            this.byteBuffer.put((byte) ((pixel >> 24) & 0xFF)); // Alpha
+            buffer.put((byte) ((pixel >> 16) & 0xFF)); // Red
+            buffer.put((byte) ((pixel >> 8) & 0xFF)); // Green
+            buffer.put((byte) (pixel & 0xFF)); // Blue
+            buffer.put((byte) ((pixel >> 24) & 0xFF)); // Alpha
         }
-        this.byteBuffer.flip();
+        buffer.flip();
     }
 
     public int getWidth() {
@@ -76,7 +73,7 @@ public class TextRenderer {
         return this.framebuffer;
     }
 
-    public ByteBuffer getByteBuffer() {
-        return this.byteBuffer;
+    public ByteBuffer createByteBuffer() {
+        return ByteBuffer.allocateDirect(4 * this.width * this.height);
     }
 }

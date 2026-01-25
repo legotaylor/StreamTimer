@@ -1,6 +1,7 @@
 package dev.dannytaylor.streamtimer.render;
 
 import dev.dannytaylor.streamtimer.StreamTimerMain;
+import dev.dannytaylor.streamtimer.config.RenderMode;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
 
@@ -18,8 +19,9 @@ public class SetupGUI {
     
     private void init() {
         System.out.println("[Stream Timer] Initializing GUI...");
-        if (StreamTimerConfig.instance.skipSetupScreen.value()) launch(StreamTimerConfig.instance.previouslyStartedAsDialog.value());
+        if (StreamTimerConfig.instance.skipSetupScreen.value()) launch(StreamTimerConfig.instance.previousRenderMode.value());
         else {
+            System.out.println("[Stream Timer] Launching Setup GUI...");
             this.frame = new JFrame(StaticVariables.name + ": Setup");
             Dimension size = new Dimension(576, 200);
             JPanel textPanel = new JPanel();
@@ -39,33 +41,48 @@ public class SetupGUI {
             JPanel buttonsPanel = new JPanel();
             buttonsPanel.setLayout(new BorderLayout());
 
-            JButton frameMode = GUIWidgets.createButton("Open as Frame");
-            frameMode.setToolTipText("Runs as a frame. This won't always prevent minimizing, and you'll see the icon in your taskbar.");
+            JPanel glButtonsPanel = new JPanel();
+            glButtonsPanel.setLayout(new BorderLayout());
 
-            JButton dialogMode = GUIWidgets.createButton("Open as Dialog");
-            dialogMode.setToolTipText("Runs as a dialog. This prevents minimising, however you will have use the tray icon to bring the window to the front.");
+            JButton frameModeGL = GUIWidgets.createButton("Window");
+            frameModeGL.setToolTipText("Runs in a window. This won't always prevent minimizing, and you'll see the icon in your taskbar.");
 
-            frameMode.addActionListener(l -> {
-                frameMode.setEnabled(false);
-                dialogMode.setEnabled(false);
-                launch(false);
+            JButton dialogModeGL = GUIWidgets.createButton("Dialog");
+            dialogModeGL.setToolTipText("Runs as a dialog. This prevents minimising, however you will have use the tray icon to bring the window to the front.");
+
+            JCheckBox legacyMode = GUIWidgets.createCheckbox("Use Legacy Renderer");
+            legacyMode.setToolTipText("Opens using the legacy rendering system. Features requiring OpenGL will not be available!");
+
+            frameModeGL.addActionListener(l -> {
+                StreamTimerConfig.instance.previousRenderMode.setValue(RenderMode.GL_FRAME, true);
+                frameModeGL.setEnabled(false);
+                dialogModeGL.setEnabled(false);
+                launch(legacyMode.isSelected() ? RenderMode.TEXT_FRAME : RenderMode.GL_FRAME);
             });
-            dialogMode.addActionListener(l -> {
-                StreamTimerConfig.instance.previouslyStartedAsDialog.setValue(true, true);
-                frameMode.setEnabled(false);
-                dialogMode.setEnabled(false);
-                launch(true);
+
+            dialogModeGL.addActionListener(l -> {
+                StreamTimerConfig.instance.previousRenderMode.setValue(RenderMode.GL_DIALOG, true);
+                frameModeGL.setEnabled(false);
+                dialogModeGL.setEnabled(false);
+                launch(legacyMode.isSelected() ? RenderMode.TEXT_DIALOG : RenderMode.GL_DIALOG);
             });
+
+            JPanel legacyModePanel = new JPanel();
+            legacyModePanel.add(legacyMode);
+            GUI.setCentered(legacyModePanel);
 
             JPanel dontShowAgainPanel = new JPanel();
-            JCheckBox dontShowAgain = GUIWidgets.createCheckbox();
+            JCheckBox dontShowAgain = GUIWidgets.createCheckbox("Don't show this screen again!");
+            dontShowAgain.setToolTipText("If enabled, this screen will be skipped and the render mode will be remembered for future start ups.");
             dontShowAgain.addChangeListener(l -> StreamTimerConfig.instance.skipSetupScreen.setValue(dontShowAgain.isSelected(), true));
             dontShowAgainPanel.add(dontShowAgain);
-            dontShowAgainPanel.add(new JLabel("Don't show this screen again!"));
             GUI.setCentered(dontShowAgainPanel);
 
-            buttonsPanel.add(frameMode, BorderLayout.NORTH);
-            buttonsPanel.add(dialogMode, BorderLayout.CENTER);
+            glButtonsPanel.add(dialogModeGL, BorderLayout.NORTH);
+            glButtonsPanel.add(frameModeGL, BorderLayout.SOUTH);
+
+            buttonsPanel.add(glButtonsPanel, BorderLayout.NORTH);
+            buttonsPanel.add(legacyModePanel, BorderLayout.CENTER);
             buttonsPanel.add(dontShowAgainPanel, BorderLayout.SOUTH);
 
             this.frame.add(textPanel, BorderLayout.NORTH);
@@ -75,12 +92,6 @@ public class SetupGUI {
             this.frame.setMinimumSize(size);
             this.frame.setSize(size.width, size.height);
             this.frame.setResizable(false);
-
-            try {
-                if (StreamTimerMain.gui.icon != null) this.frame.setIconImage(StreamTimerMain.gui.icon.getImage());
-            } catch (Exception error) {
-                System.err.println("[Stream Timer] Failed to set icon: " + error);
-            }
 
             this.frame.setLocationRelativeTo(null);
             this.frame.setVisible(true);
@@ -124,9 +135,9 @@ public class SetupGUI {
         }
     }
 
-    private void launch(boolean dialog) {
-        StreamTimerConfig.instance.previouslyStartedAsDialog.setValue(dialog, true);
+    private void launch(RenderMode renderMode) {
+        StreamTimerConfig.instance.previousRenderMode.setValue(renderMode, true);
         this.frame.setVisible(false);
-        StreamTimerMain.gui.init(dialog);
+        StreamTimerMain.gui.init(renderMode);
     }
 }
