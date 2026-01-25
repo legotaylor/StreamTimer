@@ -10,11 +10,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
+import java.util.concurrent.CountDownLatch;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
 public class StreamTimerResources {
+    public static CountDownLatch latch = new CountDownLatch(1);
     private static final String location = "assets/streamtimer/export/";
 
     public static void extract() {
@@ -29,6 +31,7 @@ public class StreamTimerResources {
         } catch (Exception error) {
             System.err.println("Failed to copy assets: " + error);
         }
+        latch.countDown();
     }
 
     private static void extractFromJar(URL resourceUrl, Path outputDir) {
