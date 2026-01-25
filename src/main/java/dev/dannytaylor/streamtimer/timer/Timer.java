@@ -1,7 +1,12 @@
 package dev.dannytaylor.streamtimer.timer;
 
 import dev.dannytaylor.streamtimer.StreamTimerMain;
+import dev.dannytaylor.streamtimer.audio.SoundPlayer;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
+import dev.dannytaylor.streamtimer.data.StaticVariables;
+
+import java.io.File;
+import java.nio.file.Path;
 
 public class Timer {
     private boolean running;
@@ -23,6 +28,9 @@ public class Timer {
             if (!StreamTimerConfig.instance.reversed.value()) {
                 this.running = false;
                 this.time = 0;
+                if (StreamTimerConfig.instance.finishSound.value()) {
+                    SoundPlayer.playSound(new File(Path.of(StaticVariables.name + "Assets").toFile(), "finishSound.wav"));
+                }
                 StreamTimerMain.gui.messageText.setText("Timer finished!");
                 StreamTimerMain.gui.toggleButton.setText("START");
                 return;

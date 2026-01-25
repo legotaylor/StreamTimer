@@ -209,6 +209,13 @@ public class GUI {
                 StreamTimerConfig.instance.rainbow.setValue(rainbow.isSelected(), true);
             });
             extraSettings.add(rainbow);
+
+            JCheckBox finishSound = GUIWidgets.createCheckbox("Finish Sound");
+            finishSound.setSelected(StreamTimerConfig.instance.finishSound.value());
+            finishSound.addChangeListener(listener -> {
+                StreamTimerConfig.instance.finishSound.setValue(finishSound.isSelected(), true);
+            });
+            extraSettings.add(finishSound);
         }
 
         setCentered(extraSettings);
