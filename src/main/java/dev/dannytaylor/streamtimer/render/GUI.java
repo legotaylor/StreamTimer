@@ -231,9 +231,9 @@ public class GUI {
         this.window.setSize(size.width, size.height);
 
         if (this.window instanceof JFrame) {
-            //((JFrame)this.window).setResizable(false);
+            ((JFrame)this.window).setResizable(false);
         } else if (this.window instanceof JDialog) {
-            //((JDialog)this.window).setResizable(false);
+            ((JDialog)this.window).setResizable(false);
         }
 
         try {
