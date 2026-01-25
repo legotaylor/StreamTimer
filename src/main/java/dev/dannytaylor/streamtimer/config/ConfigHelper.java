@@ -1,5 +1,6 @@
 package dev.dannytaylor.streamtimer.config;
 
+import dev.dannytaylor.streamtimer.data.StaticVariables;
 import org.quiltmc.config.api.ReflectiveConfig;
 import org.quiltmc.config.api.serializers.TomlSerializer;
 import org.quiltmc.config.implementor_api.ConfigEnvironment;
@@ -11,7 +12,7 @@ public class ConfigHelper {
 	private static ConfigEnvironment environment;
 
 	public static <C extends ReflectiveConfig> C register(String namespace, String id, Class<C> config) {
-		return ConfigFactory.create(getConfigEnvironment(), namespace, id, Paths.get("").toAbsolutePath(), builder -> {}, config, builder -> {});
+		return ConfigFactory.create(getConfigEnvironment(), namespace, id, Paths.get(StaticVariables.name + "Assets").toAbsolutePath(), builder -> {}, config, builder -> {});
 	}
 
 	public static ConfigEnvironment getConfigEnvironment() {

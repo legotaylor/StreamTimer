@@ -15,7 +15,6 @@ public class StreamTimerMain {
     public static void main(String[] args) {
         try {
             StreamTimerResources.extract();
-            StreamTimerResources.latch.await();
             StreamTimerConfig.bootstrap();
             gui.latch.await();
             long nextTick = System.nanoTime();
