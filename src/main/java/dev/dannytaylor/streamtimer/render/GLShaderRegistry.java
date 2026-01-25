@@ -1,20 +1,19 @@
 package dev.dannytaylor.streamtimer.render;
 
 import com.jogamp.opengl.GL2;
+import dev.dannytaylor.streamtimer.data.StaticVariables;
+
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class GLShaderRegistry {
     public final int vert;
     public final int frag;
-    public final long startTime;
 
-    public GLShaderRegistry(GL2 gl) throws URISyntaxException, IOException {
-        this.vert = compileShader(gl, Path.of(Resources.getShader("vertex.glsl").toURI()), GL2.GL_VERTEX_SHADER);
-        this.frag = compileShader(gl, Path.of(Resources.getShader("fragment.glsl").toURI()), GL2.GL_FRAGMENT_SHADER);
-        this.startTime = System.currentTimeMillis();
+    public GLShaderRegistry(GL2 gl) throws IOException {
+        this.vert = compileShader(gl, Path.of(StaticVariables.name + "Assets/vertex.glsl"), GL2.GL_VERTEX_SHADER);
+        this.frag = compileShader(gl, Path.of(StaticVariables.name + "Assets/fragment.glsl"), GL2.GL_FRAGMENT_SHADER);
     }
 
     private static int compileShader(GL2 gl, Path path, int type) throws IOException {

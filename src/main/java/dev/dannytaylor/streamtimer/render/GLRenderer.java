@@ -67,7 +67,7 @@ public class GLRenderer implements GLEventListener {
             StreamTimerMain.textRenderer.updateByteBuffer(buffer);
 
             gl.glUseProgram(this.shaderProgram);
-            gl.glUniform1f(gl.glGetUniformLocation(this.shaderProgram, "uTime"), (System.currentTimeMillis() - this.shaderRegistry.startTime) / 1000F);
+            gl.glUniform1f(gl.glGetUniformLocation(this.shaderProgram, "uTime"), System.currentTimeMillis() / 1000F);
             Color backgroundColor = new Color(StreamTimerConfig.instance.backgroundColor.value());
             gl.glUniform1f(gl.glGetUniformLocation(this.shaderProgram, "uBackground"), StreamTimerConfig.instance.background.value() ? 1.0F : 0.0F);
             gl.glUniform4f(gl.glGetUniformLocation(this.shaderProgram, "uBackgroundColor"), backgroundColor.getRed() / 255.0F, backgroundColor.getGreen() / 255.0F, backgroundColor.getBlue() / 255.0F, backgroundColor.getAlpha() / 255.0F);
