@@ -10,10 +10,6 @@ import java.awt.image.BufferedImage;
 public class TextRendererPanel extends JPanel implements TimerPanel {
     private BufferedImage image;
 
-    public void setImage(BufferedImage image) {
-        this.image = image;
-    }
-
     @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
@@ -38,7 +34,7 @@ public class TextRendererPanel extends JPanel implements TimerPanel {
 
     @Override
     public void update() {
+        this.image = StreamTimerMain.textRenderer.getFramebuffer();
         repaint();
-        setImage(StreamTimerMain.textRenderer.getFramebuffer());
     }
 }
