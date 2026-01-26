@@ -50,6 +50,7 @@ public class GUI {
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weighty = 1;
+        System.out.println("DEBUG: " + renderMode.usesGL());
         this.timer = renderMode.usesGL() ? new GLRendererPanel(new GLCapabilities(GLProfile.get(GLProfile.GL2))) : new TextRendererPanel();
         this.timer.setPreferredSize(new Dimension(576, 144));
         this.window.add(this.timer, gbc);
@@ -112,43 +113,47 @@ public class GUI {
             textColorTab.setLayout(new BoxLayout(textColorTab, BoxLayout.Y_AXIS));
             textColorTab.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
 
-            JPanel textCheckboxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            if (renderMode.usesGL()) {
+                JPanel textCheckboxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 
-            JCheckBox rainbow = GUIWidgets.createCheckbox("Rainbow Mode");
-            rainbow.setToolTipText("When enabled, the timer text renders with a coloured effect.");
-            rainbow.setSelected(StreamTimerConfig.instance.rainbow.value());
-            rainbow.addChangeListener(i -> StreamTimerConfig.instance.rainbow.setValue(rainbow.isSelected(), true));
-            textCheckboxPanel.add(rainbow);
-            JCheckBox dimWhenStopped = GUIWidgets.createCheckbox("Dim when Timer Stopped");
-            dimWhenStopped.setToolTipText("When enabled, the timer text renders at 50% colour intensity.");
-            dimWhenStopped.setSelected(StreamTimerConfig.instance.dimWhenStopped.value());
-            dimWhenStopped.addChangeListener(i -> StreamTimerConfig.instance.dimWhenStopped.setValue(dimWhenStopped.isSelected(), true));
-            textCheckboxPanel.add(dimWhenStopped);
+                JCheckBox rainbow = GUIWidgets.createCheckbox("Rainbow Mode");
+                rainbow.setToolTipText("When enabled, the timer text renders with a coloured effect.");
+                rainbow.setSelected(StreamTimerConfig.instance.rainbow.value());
+                rainbow.addChangeListener(i -> StreamTimerConfig.instance.rainbow.setValue(rainbow.isSelected(), true));
+                textCheckboxPanel.add(rainbow);
+                JCheckBox dimWhenStopped = GUIWidgets.createCheckbox("Dim when Timer Stopped");
+                dimWhenStopped.setToolTipText("When enabled, the timer text renders at 50% colour intensity.");
+                dimWhenStopped.setSelected(StreamTimerConfig.instance.dimWhenStopped.value());
+                dimWhenStopped.addChangeListener(i -> StreamTimerConfig.instance.dimWhenStopped.setValue(dimWhenStopped.isSelected(), true));
+                textCheckboxPanel.add(dimWhenStopped);
+                textColorTab.add(textCheckboxPanel);
+                textColorTab.add(Box.createVerticalStrut(6));
+            }
 
             Color textColor = new Color(StreamTimerConfig.instance.textColor.value(), true);
             JColorChooser textColorChooser = new JColorChooser(textColor);
             textColorChooser.setBorder(BorderFactory.createEmptyBorder());
             textColorChooser.getSelectionModel().addChangeListener(l -> StreamTimerConfig.instance.textColor.setValue(textColorChooser.getColor().getRGB(), false));
-            textColorTab.add(textCheckboxPanel);
-            textColorTab.add(Box.createVerticalStrut(6));
             textColorTab.add(textColorChooser);
             tabs.addTab("Text Colour", textColorTab);
 
             JPanel backgroundColorTab = new JPanel();
             backgroundColorTab.setLayout(new BoxLayout(backgroundColorTab, BoxLayout.Y_AXIS));
             backgroundColorTab.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
-            JPanel backgroundCheckboxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-            JCheckBox background = GUIWidgets.createCheckbox("Render Background");
-            background.setToolTipText("When enabled, renders a solid coloured background which can be chroma-keyed out in some window capturing applications.");
-            background.setSelected(StreamTimerConfig.instance.background.value());
-            background.addChangeListener(f -> StreamTimerConfig.instance.background.setValue(background.isSelected(), true));
-            backgroundCheckboxPanel.add(background);
+            if (renderMode.usesGL()) {
+                JPanel backgroundCheckboxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+                JCheckBox background = GUIWidgets.createCheckbox("Render Background");
+                background.setToolTipText("When enabled, renders a solid coloured background which can be chroma-keyed out in some window capturing applications.");
+                background.setSelected(StreamTimerConfig.instance.background.value());
+                background.addChangeListener(f -> StreamTimerConfig.instance.background.setValue(background.isSelected(), true));
+                backgroundCheckboxPanel.add(background);
+                backgroundColorTab.add(backgroundCheckboxPanel);
+                backgroundColorTab.add(Box.createVerticalStrut(6));
+            }
             Color backgroundColor = new Color(StreamTimerConfig.instance.backgroundColor.value(), true);
             JColorChooser backgroundColorChooser = new JColorChooser(backgroundColor);
             backgroundColorChooser.setBorder(BorderFactory.createEmptyBorder());
             backgroundColorChooser.getSelectionModel().addChangeListener(l -> StreamTimerConfig.instance.backgroundColor.setValue(backgroundColorChooser.getColor().getRGB(), false));
-            backgroundColorTab.add(backgroundCheckboxPanel);
-            backgroundColorTab.add(Box.createVerticalStrut(6));
             backgroundColorTab.add(backgroundColorChooser);
             tabs.addTab("Background Colour", backgroundColorTab);
 
@@ -218,18 +223,16 @@ public class GUI {
             optionsRow.add(forceFocus);
         }
 
-        if (this.timer instanceof GLRendererPanel) {
-            JCheckBox reversed = GUIWidgets.createCheckbox("Count up");
-            reversed.setToolTipText("When enabled, the timer counts up instead of down.");
-            reversed.setSelected(StreamTimerConfig.instance.reversed.value());
-            reversed.addChangeListener(e -> StreamTimerConfig.instance.reversed.setValue(reversed.isSelected(), true));
-            optionsRow.add(reversed);
-            JCheckBox finishSound = GUIWidgets.createCheckbox("Finish Sound");
-            finishSound.setToolTipText("When enabled, a sound will be played after the timer reaches 0.");
-            finishSound.setSelected(StreamTimerConfig.instance.finishSound.value());
-            finishSound.addChangeListener(e -> StreamTimerConfig.instance.finishSound.setValue(finishSound.isSelected(), true));
-            optionsRow.add(finishSound);
-        }
+        JCheckBox reversed = GUIWidgets.createCheckbox("Count up");
+        reversed.setToolTipText("When enabled, the timer counts up instead of down.");
+        reversed.setSelected(StreamTimerConfig.instance.reversed.value());
+        reversed.addChangeListener(e -> StreamTimerConfig.instance.reversed.setValue(reversed.isSelected(), true));
+        optionsRow.add(reversed);
+        JCheckBox finishSound = GUIWidgets.createCheckbox("Finish Sound");
+        finishSound.setToolTipText("When enabled, a sound will be played after the timer reaches 0.");
+        finishSound.setSelected(StreamTimerConfig.instance.finishSound.value());
+        finishSound.addChangeListener(e -> StreamTimerConfig.instance.finishSound.setValue(finishSound.isSelected(), true));
+        optionsRow.add(finishSound);
 
         this.window.add(optionsRow, gbc);
         gbc.gridy = 4;

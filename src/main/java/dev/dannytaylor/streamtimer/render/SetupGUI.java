@@ -57,13 +57,13 @@ public class SetupGUI {
             frameModeGL.addActionListener(l -> {
                 frameModeGL.setEnabled(false);
                 dialogModeGL.setEnabled(false);
-                launch(RenderMode.GL_FRAME);
+                launch(legacyMode.isSelected() ? RenderMode.TEXT_FRAME : RenderMode.GL_FRAME);
             });
 
             dialogModeGL.addActionListener(l -> {
                 frameModeGL.setEnabled(false);
                 dialogModeGL.setEnabled(false);
-                launch(RenderMode.GL_DIALOG);
+                launch(legacyMode.isSelected() ? RenderMode.TEXT_DIALOG : RenderMode.GL_DIALOG);
             });
 
             JPanel legacyModePanel = new JPanel();
@@ -93,6 +93,7 @@ public class SetupGUI {
             this.frame.setResizable(false);
 
             this.frame.setLocationRelativeTo(null);
+            if (StreamTimerMain.icon != null) this.frame.setIconImage(StreamTimerMain.icon.getImage());
             this.frame.setVisible(true);
 
             this.frame.addWindowListener(new WindowListener() {

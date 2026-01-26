@@ -1,5 +1,8 @@
 package dev.dannytaylor.streamtimer.render;
 
+import dev.dannytaylor.streamtimer.StreamTimerMain;
+import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -14,6 +17,7 @@ public class TextRendererPanel extends JPanel implements TimerPanel {
     @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
+        this.setBackground(new Color(StreamTimerConfig.instance.backgroundColor.value(), false));
         if (this.image != null) {
             int panelWidth = getWidth();
             int panelHeight = getHeight();
@@ -35,5 +39,6 @@ public class TextRendererPanel extends JPanel implements TimerPanel {
     @Override
     public void update() {
         repaint();
+        setImage(StreamTimerMain.textRenderer.getFramebuffer());
     }
 }
