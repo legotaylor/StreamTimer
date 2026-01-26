@@ -1,20 +1,26 @@
 package dev.dannytaylor.streamtimer;
 
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
+import dev.dannytaylor.streamtimer.data.StaticVariables;
 import dev.dannytaylor.streamtimer.render.GUI;
+import dev.dannytaylor.streamtimer.render.Resources;
 import dev.dannytaylor.streamtimer.render.TextRenderer;
 import dev.dannytaylor.streamtimer.timer.Timer;
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
+
+import javax.swing.*;
 
 public class StreamTimerMain {
     public static boolean running = true;
     public static Timer timer = new Timer();
     public static GUI gui = new GUI();
+    public static ImageIcon icon;
     public static TextRenderer textRenderer = new TextRenderer(576, 144);
 
     public static void main(String[] args) {
         try {
             StreamTimerResources.extract();
+            icon = Resources.getTexture(StreamTimerMain.class.getResource(StaticVariables.logo), 64, 64);
             StreamTimerConfig.bootstrap();
             gui.latch.await();
             long nextTick = System.nanoTime();

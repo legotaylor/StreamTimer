@@ -23,8 +23,8 @@ dependencies {
     implementation("org.quiltmc:quilt-config:${project.quilt_config_version}")
     implementation("org.quiltmc.quilt-config.serializers:toml:${project.quilt_config_version}")
     implementation("com.formdev:flatlaf:${project.flatlaf_version}")
-    implementation 'org.jogamp.gluegen:gluegen-rt-main:2.6.0'
-    implementation 'org.jogamp.jogl:jogl-all-main:2.6.0'
+    implementation('org.jogamp.gluegen:gluegen-rt-main:2.6.0')
+    implementation('org.jogamp.jogl:jogl-all-main:2.6.0')
 }
 
 java {

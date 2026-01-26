@@ -33,6 +33,7 @@ public class Timer {
                 }
                 StreamTimerMain.gui.messageText.setText("Timer finished!");
                 StreamTimerMain.gui.toggleButton.setText("START");
+                StreamTimerMain.gui.toggleButton.setToolTipText("Starts the timer");
                 return;
             }
         }

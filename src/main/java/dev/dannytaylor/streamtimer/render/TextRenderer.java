@@ -9,14 +9,12 @@ import java.nio.ByteBuffer;
 public class TextRenderer {
     private final int width;
     private final int height;
-    private final Font font;
 
     private final BufferedImage framebuffer;
 
     public TextRenderer(int width, int height) {
         this.width = width;
         this.height = height;
-        this.font = new Font(StreamTimerConfig.instance.font.value(), StreamTimerConfig.instance.style.value(), StreamTimerConfig.instance.size.value());
         this.framebuffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     }
 
@@ -30,8 +28,8 @@ public class TextRenderer {
         graphics.fill(new Rectangle(0, 0, this.width, this.height));
         graphics.setComposite(AlphaComposite.SrcOver);
 
-        graphics.setFont(this.font);
-        graphics.setColor(Color.WHITE);
+        graphics.setFont(new Font(StreamTimerConfig.instance.font.value(), StreamTimerConfig.instance.style.value(), StreamTimerConfig.instance.size.value()));
+        graphics.setColor(new Color(StreamTimerConfig.instance.textColor.value(), true));
 
         FontMetrics fm = graphics.getFontMetrics();
         int x = (this.width - fm.stringWidth(timeText)) / 2;
@@ -63,10 +61,6 @@ public class TextRenderer {
 
     public int getHeight() {
         return this.height;
-    }
-
-    public Font getFont() {
-        return this.font;
     }
 
     public BufferedImage getFramebuffer() {

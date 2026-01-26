@@ -7,6 +7,8 @@ import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.RenderMode;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
+import dev.dannytaylor.streamtimer.timer.TimerUtils;
+import dev.dannytaylor.streamtimer.util.NumberFilter;
 
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
@@ -14,24 +16,18 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.concurrent.CountDownLatch;
 
-import dev.dannytaylor.streamtimer.timer.TimerUtils;
-import dev.dannytaylor.streamtimer.util.NumberFilter;
-
 public class GUI {
     public Window window;
     public JPanel timer;
-    public String initMessageText = "⠀";
     public JLabel messageText;
+    public String initMessageText = "⠀";
     public JButton toggleButton;
-
-    public SystemTray systemTray;
-    public TrayIcon trayIcon;
-
-    public ImageIcon icon;
+    public JButton configureButton;
 
     public CountDownLatch latch = new CountDownLatch(1);
 
     public SetupGUI setupGUI;
+    public static Tray tray;
 
     public GUI() {
         setup();
@@ -40,246 +36,273 @@ public class GUI {
 
     public void setup() {
         setTheme(this.window);
-        this.icon = Resources.getTexture(this.getClass().getResource(StaticVariables.logo), 64, 64);
     }
 
     public void init(RenderMode renderMode) {
-        System.out.println("[Stream Timer] Launching GUI...");
-        Dimension size = new Dimension(576, 320);
         boolean isDialog = renderMode.getRenderType().equals(RenderMode.RenderType.DIALOG);
-        this.window = isDialog ? new JDialog((Frame) null, StaticVariables.name) : new JFrame(StaticVariables.name);
-        this.window.setLayout(new BorderLayout());
-        initTrayIcon();
+        this.window = isDialog ? new JDialog((Frame) null, StaticVariables.name, false) : new JFrame(StaticVariables.name);
+        this.window.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
 
-        JPanel timerPanel = new JPanel();
-        timerPanel.setLayout(new BorderLayout());
-        timerPanel.setBackground(new Color(StreamTimerConfig.instance.backgroundColor.value()));
+        gbc.gridx = 0;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(6, 6, 6, 6);
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 1;
         this.timer = renderMode.usesGL() ? new GLRendererPanel(new GLCapabilities(GLProfile.get(GLProfile.GL2))) : new TextRendererPanel();
         this.timer.setPreferredSize(new Dimension(576, 144));
-        this.timer.setBackground(new Color(StreamTimerConfig.instance.backgroundColor.value()));
-        timerPanel.add(this.timer, BorderLayout.CENTER);
-
-        this.window.add(timerPanel, BorderLayout.NORTH);
-
-        JPanel settingsPanel = new JPanel();
-        settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
-
-        JPanel togglePanel = new JPanel();
+        this.window.add(this.timer, gbc);
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weighty = 0;
+        JPanel configureRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
         this.toggleButton = GUIWidgets.createButton("START");
-        this.toggleButton.addActionListener(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (StreamTimerMain.timer.isRunning()) {
-                    StreamTimerMain.timer.stop();
-                    messageText.setText("Stopped timer!");
-                    toggleButton.setText("START");
-                } else {
-                    StreamTimerMain.timer.start();
-                    messageText.setText("Started timer!");
-                    toggleButton.setText("STOP");
+        this.toggleButton.setToolTipText("Starts the timer");
+        this.toggleButton.addActionListener(e -> toggleTimer());
+        configureRow.add(this.toggleButton);
+        configureButton = GUIWidgets.createButton("...");
+        configureButton.setPreferredSize(new Dimension(26, 26));
+        configureButton.setToolTipText("Configure");
+        configureButton.addActionListener(e -> {
+            configureButton.setEnabled(false);
+            JDialog configureDialog = new JDialog(this.window);
+            configureDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            configureDialog.setTitle(StaticVariables.name + ": Configure");
+            JTabbedPane tabs = new JTabbedPane();
+            JPanel fontTab = new JPanel(new GridBagLayout());
+            GridBagConstraints fontTabGbc = new GridBagConstraints();
+            fontTabGbc.insets = new Insets(8, 8, 8, 8);
+            fontTabGbc.fill = GridBagConstraints.HORIZONTAL;
+            fontTabGbc.anchor = GridBagConstraints.CENTER;
+            fontTabGbc.gridx = 0;
+            fontTabGbc.gridy = 0;
+            JLabel fontLabel = new JLabel("Font:");
+            fontLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+            fontTab.add(fontLabel, fontTabGbc);
+            fontTabGbc.gridx = 1;
+            JComboBox<String> fontCombo = new JComboBox<>(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
+            fontCombo.setSelectedItem(StreamTimerConfig.instance.font.value());
+            fontTab.add(fontCombo, fontTabGbc);
+            fontTabGbc.gridx = 0;
+            fontTabGbc.gridy++;
+            JLabel styleLabel = new JLabel("Style:");
+            styleLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+            fontTab.add(styleLabel, fontTabGbc);
+            fontTabGbc.gridx = 1;
+            String[] styles = {"Plain", "Bold", "Italic", "Bold Italic"};
+            JComboBox<String> styleCombo = new JComboBox<>(styles);
+            styleCombo.setSelectedIndex(StreamTimerConfig.instance.style.value());
+            fontTab.add(styleCombo, fontTabGbc);
+            fontTabGbc.gridx = 0;
+            fontTabGbc.gridy++;
+            JLabel sizeLabel = new JLabel("Size:");
+            sizeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+            fontTab.add(sizeLabel, fontTabGbc);
+            fontTabGbc.gridx = 1;
+            JSpinner sizeSpinner = new JSpinner(new SpinnerNumberModel(StreamTimerConfig.instance.size.value().intValue(), 8, 200, 1));
+            fontTab.add(sizeSpinner, fontTabGbc);
+
+            fontCombo.addActionListener(f -> StreamTimerConfig.instance.font.setValue((String) fontCombo.getSelectedItem(), true));
+            styleCombo.addActionListener(g -> StreamTimerConfig.instance.style.setValue(styleCombo.getSelectedIndex(), true));
+            sizeSpinner.addChangeListener(h -> StreamTimerConfig.instance.size.setValue((Integer) sizeSpinner.getValue(), true));
+            tabs.addTab("Font", fontTab);
+
+            JPanel textColorTab = new JPanel();
+            textColorTab.setLayout(new BoxLayout(textColorTab, BoxLayout.Y_AXIS));
+            textColorTab.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+
+            JPanel textCheckboxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+
+            JCheckBox rainbow = GUIWidgets.createCheckbox("Rainbow Mode");
+            rainbow.setToolTipText("When enabled, the timer text renders with a coloured effect.");
+            rainbow.setSelected(StreamTimerConfig.instance.rainbow.value());
+            rainbow.addChangeListener(i -> StreamTimerConfig.instance.rainbow.setValue(rainbow.isSelected(), true));
+            textCheckboxPanel.add(rainbow);
+            JCheckBox dimWhenStopped = GUIWidgets.createCheckbox("Dim when Timer Stopped");
+            dimWhenStopped.setToolTipText("When enabled, the timer text renders at 50% colour intensity.");
+            dimWhenStopped.setSelected(StreamTimerConfig.instance.dimWhenStopped.value());
+            dimWhenStopped.addChangeListener(i -> StreamTimerConfig.instance.dimWhenStopped.setValue(dimWhenStopped.isSelected(), true));
+            textCheckboxPanel.add(dimWhenStopped);
+
+            Color textColor = new Color(StreamTimerConfig.instance.textColor.value(), true);
+            JColorChooser textColorChooser = new JColorChooser(textColor);
+            textColorChooser.setBorder(BorderFactory.createEmptyBorder());
+            textColorChooser.getSelectionModel().addChangeListener(l -> StreamTimerConfig.instance.textColor.setValue(textColorChooser.getColor().getRGB(), false));
+            textColorTab.add(textCheckboxPanel);
+            textColorTab.add(Box.createVerticalStrut(6));
+            textColorTab.add(textColorChooser);
+            tabs.addTab("Text Colour", textColorTab);
+
+            JPanel backgroundColorTab = new JPanel();
+            backgroundColorTab.setLayout(new BoxLayout(backgroundColorTab, BoxLayout.Y_AXIS));
+            backgroundColorTab.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+            JPanel backgroundCheckboxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            JCheckBox background = GUIWidgets.createCheckbox("Render Background");
+            background.setToolTipText("When enabled, renders a solid coloured background which can be chroma-keyed out in some window capturing applications.");
+            background.setSelected(StreamTimerConfig.instance.background.value());
+            background.addChangeListener(f -> StreamTimerConfig.instance.background.setValue(background.isSelected(), true));
+            backgroundCheckboxPanel.add(background);
+            Color backgroundColor = new Color(StreamTimerConfig.instance.backgroundColor.value(), true);
+            JColorChooser backgroundColorChooser = new JColorChooser(backgroundColor);
+            backgroundColorChooser.setBorder(BorderFactory.createEmptyBorder());
+            backgroundColorChooser.getSelectionModel().addChangeListener(l -> StreamTimerConfig.instance.backgroundColor.setValue(backgroundColorChooser.getColor().getRGB(), false));
+            backgroundColorTab.add(backgroundCheckboxPanel);
+            backgroundColorTab.add(Box.createVerticalStrut(6));
+            backgroundColorTab.add(backgroundColorChooser);
+            tabs.addTab("Background Colour", backgroundColorTab);
+
+            configureDialog.add(tabs);
+            configureDialog.setResizable(false);
+            configureDialog.pack();
+            configureDialog.setMinimumSize(new Dimension(700, 400));
+            configureDialog.setLocationRelativeTo(this.window);
+            configureDialog.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    StreamTimerConfig.instance.textColor.setValue(textColorChooser.getColor().getRGB(), true);
+                    StreamTimerConfig.instance.backgroundColor.setValue(backgroundColorChooser.getColor().getRGB(), true);
+                    configureButton.setEnabled(true);
                 }
-            }
+            });
+            configureDialog.setVisible(true);
         });
-        this.toggleButton.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                messageText.setText("⠀");
-            }
-        });
-        togglePanel.add(setCentered(this.toggleButton));
-        settingsPanel.add(togglePanel);
-
-        JPanel timerSettings = new JPanel();
-
+        configureRow.add(configureButton);
+        this.window.add(configureRow, gbc);
+        gbc.gridy = 2;
+        JPanel timerRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
         JTextField hours = GUIWidgets.createText(StreamTimerConfig.instance.addHours.value(), 2);
-        ((AbstractDocument)hours.getDocument()).setDocumentFilter(new NumberFilter());
-        timerSettings.add(hours);
-        timerSettings.add(new JLabel(":"));
+        hours.setToolTipText("Seconds");
         JTextField minutes = GUIWidgets.createText(StreamTimerConfig.instance.addMinutes.value(), 2);
-        ((AbstractDocument)minutes.getDocument()).setDocumentFilter(new NumberFilter());
-        timerSettings.add(minutes);
-        timerSettings.add(new JLabel(":"));
+        minutes.setToolTipText("Minutes");
         JTextField seconds = GUIWidgets.createText(StreamTimerConfig.instance.addSeconds.value(), 2);
-        ((AbstractDocument)seconds.getDocument()).setDocumentFilter(new NumberFilter());
-        timerSettings.add(seconds);
-
-        JButton addButton = GUIWidgets.createButton("ADD");
-        addButton.addActionListener(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateTimer(TimerUtils.getSecondsFromString(hours.getText(), minutes.getText(), seconds.getText()), true, true);
-                messageText.setText("Added " + TimerUtils.getTimeFromString(hours.getText(), minutes.getText(), seconds.getText()) + " to timer!");
-            }
+        seconds.setToolTipText("Seconds");
+        ((AbstractDocument) hours.getDocument()).setDocumentFilter(new NumberFilter());
+        ((AbstractDocument) minutes.getDocument()).setDocumentFilter(new NumberFilter());
+        ((AbstractDocument) seconds.getDocument()).setDocumentFilter(new NumberFilter());
+        JButton addButton = GUIWidgets.createButton("+");
+        addButton.setToolTipText("Add time");
+        addButton.addActionListener(e -> {
+            updateTimer(TimerUtils.getSecondsFromString(hours.getText(), minutes.getText(), seconds.getText()), true, true);
+            messageText.setText("Added time to timer!");
         });
-        addButton.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                messageText.setText("⠀");
-            }
+        JButton removeButton = GUIWidgets.createButton("-");
+        removeButton.setToolTipText("Subtract time");
+        removeButton.addActionListener(e -> {
+            updateTimer(-TimerUtils.getSecondsFromString(hours.getText(), minutes.getText(), seconds.getText()), true, true);
+            messageText.setText("Subtracted time from timer!");
         });
-        timerSettings.add(addButton);
-
-        JButton removeButton = GUIWidgets.createButton("SUBTRACT");
-        removeButton.addActionListener(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateTimer(-TimerUtils.getSecondsFromString(hours.getText(), minutes.getText(), seconds.getText()), true, true);
-                messageText.setText("Subtracted " + TimerUtils.getTimeFromString(hours.getText(), minutes.getText(), seconds.getText()) + " from timer!");
-            }
+        JButton setButton = GUIWidgets.createButton("=");
+        setButton.setToolTipText("Set time");
+        setButton.addActionListener(e -> {
+            updateTimer(TimerUtils.getSecondsFromString(hours.getText(), minutes.getText(), seconds.getText()), false, true);
+            messageText.setText("Set timer!");
         });
-        removeButton.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-            }
+        timerRow.add(hours);
+        timerRow.add(new JLabel(":"));
+        timerRow.add(minutes);
+        timerRow.add(new JLabel(":"));
+        timerRow.add(seconds);
+        timerRow.add(addButton);
+        timerRow.add(removeButton);
+        timerRow.add(setButton);
+        this.window.add(timerRow, gbc);
+        gbc.gridy = 3;
+        JPanel optionsRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
-            @Override
-            public void focusLost(FocusEvent e) {
-                messageText.setText("⠀");
-            }
-        });
-        timerSettings.add(removeButton);
-
-        JButton setButton = GUIWidgets.createButton("SET");
-        setButton.addActionListener(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateTimer(TimerUtils.getSecondsFromString(hours.getText(), minutes.getText(), seconds.getText()), false, true);
-                messageText.setText("Set timer to " + TimerUtils.getTimeFromString(hours.getText(), minutes.getText(), seconds.getText()));
-            }
-        });
-        setButton.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                messageText.setText("⠀");
-            }
-        });
-        timerSettings.add(setButton);
-
-        settingsPanel.add(timerSettings);
-
-        JPanel extraSettings = new JPanel();
         if (!isDialog) {
             JCheckBox forceFocus = GUIWidgets.createCheckbox("Prevent minimize");
+            forceFocus.setToolTipText("When enabled, the window will unminimize itself when minimized.");
             forceFocus.setSelected(StreamTimerConfig.instance.forceFocus.value());
-            forceFocus.addChangeListener(listener -> {
-                StreamTimerConfig.instance.forceFocus.setValue(forceFocus.isSelected(), true);
-            });
-            extraSettings.add(forceFocus);
-            setCentered(extraSettings);
-            settingsPanel.add(extraSettings);
+            forceFocus.addChangeListener(e -> StreamTimerConfig.instance.forceFocus.setValue(forceFocus.isSelected(), true));
+            optionsRow.add(forceFocus);
         }
 
         if (this.timer instanceof GLRendererPanel) {
-//            JCheckBox spout = GUIWidgets.createCheckbox("Spout Broadcasting");
-//            spout.setSelected(StreamTimerConfig.instance.spout.value());
-//            spout.addChangeListener(listener -> {
-//                StreamTimerConfig.instance.spout.setValue(spout.isSelected(), true);
-//            });
-//            extraSettings.add(spout);
-
             JCheckBox reversed = GUIWidgets.createCheckbox("Count up");
+            reversed.setToolTipText("When enabled, the timer counts up instead of down.");
             reversed.setSelected(StreamTimerConfig.instance.reversed.value());
-            reversed.addChangeListener(listener -> {
-                StreamTimerConfig.instance.reversed.setValue(reversed.isSelected(), true);
-            });
-            extraSettings.add(reversed);
-
-            JCheckBox background = GUIWidgets.createCheckbox("Render Background");
-            background.setSelected(StreamTimerConfig.instance.background.value());
-            background.addChangeListener(listener -> {
-                StreamTimerConfig.instance.background.setValue(background.isSelected(), true);
-            });
-            extraSettings.add(background);
-
-            JCheckBox rainbow = GUIWidgets.createCheckbox("Rainbow Mode");
-            rainbow.setSelected(StreamTimerConfig.instance.rainbow.value());
-            rainbow.addChangeListener(listener -> {
-                StreamTimerConfig.instance.rainbow.setValue(rainbow.isSelected(), true);
-            });
-            extraSettings.add(rainbow);
-
+            reversed.addChangeListener(e -> StreamTimerConfig.instance.reversed.setValue(reversed.isSelected(), true));
+            optionsRow.add(reversed);
             JCheckBox finishSound = GUIWidgets.createCheckbox("Finish Sound");
+            finishSound.setToolTipText("When enabled, a sound will be played after the timer reaches 0.");
             finishSound.setSelected(StreamTimerConfig.instance.finishSound.value());
-            finishSound.addChangeListener(listener -> {
-                StreamTimerConfig.instance.finishSound.setValue(finishSound.isSelected(), true);
-            });
-            extraSettings.add(finishSound);
+            finishSound.addChangeListener(e -> StreamTimerConfig.instance.finishSound.setValue(finishSound.isSelected(), true));
+            optionsRow.add(finishSound);
         }
 
-        setCentered(extraSettings);
-        settingsPanel.add(extraSettings);
-
-        settingsPanel.setPreferredSize(new Dimension(576, 176));
-        this.window.add(settingsPanel, BorderLayout.CENTER);
-
-        JPanel messagePanel = new JPanel();
-        messagePanel.add(this.messageText = new JLabel(this.initMessageText));
-        this.window.add(messagePanel, BorderLayout.SOUTH);
-
+        this.window.add(optionsRow, gbc);
+        gbc.gridy = 4;
+        this.messageText = new JLabel(initMessageText, SwingConstants.CENTER);
+        this.window.add(this.messageText, gbc);
         this.window.pack();
-        if (this.window instanceof JFrame) {
-            ((JFrame)this.window).setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        } else if (this.window instanceof JDialog) {
-            ((JDialog)this.window).setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
-        }
-        this.window.setMinimumSize(size);
-        this.window.setSize(size.width, size.height);
-
-        if (this.window instanceof JFrame) {
-            ((JFrame)this.window).setResizable(false);
-        } else if (this.window instanceof JDialog) {
-            ((JDialog)this.window).setResizable(false);
-        }
-
-        try {
-            if (this.icon != null) this.window.setIconImage(this.icon.getImage());
-        } catch (Exception error) {
-            System.err.println("[Stream Timer] Failed to set icon: " + error);
-        }
-
+        this.window.setMinimumSize(new Dimension(576, 320));
         this.window.setLocationRelativeTo(null);
-        this.window.setVisible(true);
+
+        if (this.window instanceof JFrame) {
+            ((JFrame) this.window).setResizable(false);
+            ((JFrame) this.window).setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        } else {
+            ((JDialog) this.window).setResizable(false);
+            ((JDialog) this.window).setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        }
+
+        if (StreamTimerMain.icon != null) this.window.setIconImage(StreamTimerMain.icon.getImage());
+
+        tray = new Tray();
 
         this.window.addWindowListener(new WindowListener() {
+            @Override
             public void windowOpened(WindowEvent e) {
             }
+
+            @Override
             public void windowClosing(WindowEvent e) {
-                StreamTimerMain.timer.stop();
                 StreamTimerMain.running = false;
             }
+
+            @Override
             public void windowClosed(WindowEvent e) {
             }
+
+            @Override
             public void windowIconified(WindowEvent e) {
-                if (window instanceof JFrame) {
-                    JFrame frame = (JFrame) window;
-                    frame.setVisible(true);
-                    if (StreamTimerConfig.instance.forceFocus.value()) {
-                        frame.setExtendedState(Frame.NORMAL);
-                        frame.requestFocus();
-                    }
-                }
             }
+
+            @Override
             public void windowDeiconified(WindowEvent e) {
             }
+
+            @Override
             public void windowActivated(WindowEvent e) {
             }
+
+            @Override
             public void windowDeactivated(WindowEvent e) {
             }
         });
 
+        this.window.setVisible(true);
         this.latch.countDown();
+    }
+
+    private void setTheme(Window frame) {
+        try {
+            UIManager.setLookAndFeel(new FlatDarculaLaf());
+            if (frame != null) SwingUtilities.updateComponentTreeUI(frame);
+        } catch (Exception error) {
+            System.err.println("Failed to set theme: " + error);
+        }
+    }
+
+    public void updateTimer(long seconds, boolean add, boolean save) {
+        TimerUtils.setTimer(seconds, add, save);
+        updateTimer(null);
+    }
+
+    public void updateTimer(String time) {
+        if (this.timer instanceof TimerPanel) ((TimerPanel) this.timer).update();
+        tray.updateTimer(time);
     }
 
     public static JComponent setCentered(JComponent component) {
@@ -292,84 +315,17 @@ public class GUI {
         return component;
     }
 
-    private void setTheme(Window frame) {
-        try {
-            UIManager.setLookAndFeel(new FlatDarculaLaf());
-            if (frame != null) {
-                Dimension size = frame.getSize();
-                SwingUtilities.updateComponentTreeUI(frame);
-                frame.setSize(size);
-            }
-        } catch (Exception error) {
-            System.err.println("[Stream Timer] Error setting theme: " + error);
-        }
-    }
-
-    public void updateTimer(long seconds, boolean add, boolean save) {
-        TimerUtils.setTimer(seconds, add, save);
-        updateTimer(null);
-    }
-
-    public void updateTimer(String time) {
-        if (this.timer instanceof TimerPanel) {
-            if (this.timer instanceof TextRendererPanel) ((TextRendererPanel) this.timer).setImage(StreamTimerMain.textRenderer.getFramebuffer());
-            ((TimerPanel) this.timer).update();
-        }
-        if (time != null) {
-            if (this.trayIcon != null) this.trayIcon.setToolTip(time);
-        }
-    }
-
-    public void initTrayIcon() {
-        if (SystemTray.isSupported()) {
-            System.out.println("[Stream Timer] Initializing System Tray Icon...");
-            systemTray = SystemTray.getSystemTray();
-
-            PopupMenu popupMenu = new PopupMenu();
-
-            MenuItem titleText = new MenuItem(StaticVariables.name);
-            titleText.setEnabled(false);
-            popupMenu.add(titleText);
-
-            popupMenu.addSeparator();
-
-            MenuItem startStopButton = new MenuItem("Start/Stop");
-            startStopButton.addActionListener(l -> {
-                if (StreamTimerMain.timer.isRunning()) StreamTimerMain.timer.stop();
-                else StreamTimerMain.timer.start();
-            });
-            popupMenu.add(startStopButton);
-
-            MenuItem openButton = new MenuItem("Open Window");
-            openButton.addActionListener(l -> {
-                this.window.setVisible(true);
-                this.window.toFront();
-            });
-            popupMenu.add(openButton);
-
-            popupMenu.addSeparator();
-
-            MenuItem exitButton = new MenuItem("Exit");
-            exitButton.addActionListener(l -> {
-                StreamTimerMain.timer.stop();
-                StreamTimerMain.running = false;
-                this.systemTray.remove(this.trayIcon);
-                System.exit(0);
-            });
-            popupMenu.add(exitButton);
-
-            this.trayIcon = new TrayIcon(this.icon.getImage(), StaticVariables.name, popupMenu);
-            this.trayIcon.setImageAutoSize(true);
-
-            this.trayIcon.addActionListener(l -> {
-                this.window.setVisible(true);
-                this.window.toFront();
-            });
-            try {
-                this.systemTray.add(this.trayIcon);
-            } catch (Exception error) {
-                System.out.println("[Stream Timer] Failed to init system tray: " + error);
-            }
+    public void toggleTimer() {
+        if (StreamTimerMain.timer.isRunning()) {
+            StreamTimerMain.timer.stop();
+            this.messageText.setText("Stopped timer!");
+            this.toggleButton.setText("START");
+            this.toggleButton.setToolTipText("Starts the timer");
+        } else {
+            StreamTimerMain.timer.start();
+            this.messageText.setText("Started timer!");
+            this.toggleButton.setText("STOP");
+            this.toggleButton.setToolTipText("Stops the timer");
         }
     }
 }

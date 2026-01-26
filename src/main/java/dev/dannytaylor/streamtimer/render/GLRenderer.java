@@ -70,11 +70,12 @@ public class GLRenderer implements GLEventListener {
 
             gl.glUseProgram(this.shaderProgram);
             gl.glUniform1f(gl.glGetUniformLocation(this.shaderProgram, "uTime"), (System.currentTimeMillis() - this.startTime) / 1000F);
-            Color backgroundColor = new Color(StreamTimerConfig.instance.backgroundColor.value());
+            Color backgroundColor = new Color(StreamTimerConfig.instance.backgroundColor.value(), true);
             gl.glUniform1f(gl.glGetUniformLocation(this.shaderProgram, "uBackground"), StreamTimerConfig.instance.background.value() ? 1.0F : 0.0F);
             gl.glUniform4f(gl.glGetUniformLocation(this.shaderProgram, "uBackgroundColor"), backgroundColor.getRed() / 255.0F, backgroundColor.getGreen() / 255.0F, backgroundColor.getBlue() / 255.0F, backgroundColor.getAlpha() / 255.0F);
             gl.glUniform1f(gl.glGetUniformLocation(this.shaderProgram, "uRainbow"), StreamTimerConfig.instance.rainbow.value() ? 0.0F : 1.0F);
-
+            gl.glUniform1f(gl.glGetUniformLocation(this.shaderProgram, "uShouldDim"), StreamTimerConfig.instance.dimWhenStopped.value() ? 1.0F : 0.0F);
+            gl.glUniform1f(gl.glGetUniformLocation(this.shaderProgram, "uActive"), StreamTimerMain.timer.isRunning() ? 1.0F : 0.0F);
             gl.glBindTexture(GL2.GL_TEXTURE_2D, this.texID);
 
             int width = StreamTimerMain.textRenderer.getWidth();
@@ -133,15 +134,7 @@ public class GLRenderer implements GLEventListener {
     }
 
     public void clear(GL2 gl) {
-        if (StreamTimerConfig.instance.background.value()) {
-            Color backgroundColor = new Color(StreamTimerConfig.instance.backgroundColor.value());
-            gl.glClearColor(
-                    backgroundColor.getRed() / 255.0F,
-                    backgroundColor.getGreen() / 255.0F,
-                    backgroundColor.getBlue() / 255.0F,
-                    backgroundColor.getAlpha() / 255.0F
-            );
-        } else gl.glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
+        gl.glClearColor(0.0F, 0.0F, 0.0F, 0.0F);
         gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
     }
 

@@ -23,11 +23,13 @@ public class StreamTimerConfig extends ReflectiveConfig {
     public final TrackedValue<Boolean> reversed = this.value(false);
 
     public final TrackedValue<Boolean> background = this.value(true);
-    public final TrackedValue<Integer> backgroundColor = this.value(0x00FF00);
+    public final TrackedValue<Integer> backgroundColor = this.value(-16711936);
+    public final TrackedValue<Integer> textColor = this.value(-1);
     public final TrackedValue<String> font = this.value("SansSerif");
     public final TrackedValue<Integer> style = this.value(1);
     public final TrackedValue<Integer> size = this.value(72);
     public final TrackedValue<Boolean> rainbow = this.value(false);
+    public final TrackedValue<Boolean> dimWhenStopped = this.value(true);
     public final TrackedValue<Boolean> finishSound = this.value(false);
 
     public final TrackedValue<String> addHours = this.value("01");
