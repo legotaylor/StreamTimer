@@ -29,6 +29,7 @@ public class StreamTimerMain {
     public static void main(String[] args) {
         try {
             StreamTimerResources.extract();
+            StreamTimerResources.latch.await();
             icon = Resources.getTexture(StreamTimerMain.class.getResource(StaticVariables.logo), 64, 64);
             StreamTimerConfig.bootstrap();
             IntegrationRegistry.bootstrap();

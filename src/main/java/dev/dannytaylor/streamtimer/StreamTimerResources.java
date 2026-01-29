@@ -19,12 +19,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
+import java.util.concurrent.CountDownLatch;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
 public class StreamTimerResources {
     private static final String location = "assets/streamtimer/export/";
+
+    public static CountDownLatch latch = new CountDownLatch(1);
 
     public static void extract() {
         try {
@@ -53,6 +56,7 @@ public class StreamTimerResources {
         } catch (Exception error) {
             System.err.println("Failed to process resources: " + error);
         }
+        latch.countDown();
     }
 
     private static void extractFromJar(URL resourceUrl, Path outputDir) {

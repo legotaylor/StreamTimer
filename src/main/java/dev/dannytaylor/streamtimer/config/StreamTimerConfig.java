@@ -33,7 +33,7 @@ public class StreamTimerConfig extends ReflectiveConfig {
     public final TrackedValue<Long> time = this.value(21600000L);
     public final TrackedValue<Boolean> reversed = this.value(false);
 
-    public final TrackedValue<Boolean> background = this.value(true);
+    public final TrackedValue<Boolean> background = this.value(false);
     public final TrackedValue<Integer> backgroundColor = this.value(-16711936);
     public final TrackedValue<Integer> textColor = this.value(-1);
     public final TrackedValue<String> font = this.value("SansSerif");
