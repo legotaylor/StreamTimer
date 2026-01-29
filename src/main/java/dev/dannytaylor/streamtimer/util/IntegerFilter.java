@@ -1,10 +1,17 @@
+/*
+    StreamTimer
+    Contributor(s): dannytaylor
+    Github: https://github.com/legotaylor/StreamTimer
+    Licence: LGPL-3.0
+*/
+
 package dev.dannytaylor.streamtimer.util;
 
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 
-public class NumberFilter extends DocumentFilter {
+public class IntegerFilter extends DocumentFilter {
     @Override
     public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
         if (string.matches("\\d+")) super.insertString(fb, offset, string, attr);

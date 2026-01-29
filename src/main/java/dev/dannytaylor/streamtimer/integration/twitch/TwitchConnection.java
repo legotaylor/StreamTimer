@@ -1,3 +1,10 @@
+/*
+    StreamTimer
+    Contributor(s): dannytaylor
+    Github: https://github.com/legotaylor/StreamTimer
+    Licence: LGPL-3.0
+*/
+
 package dev.dannytaylor.streamtimer.integration.twitch;
 
 import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
@@ -12,10 +19,6 @@ import dev.dannytaylor.streamtimer.timer.TimerUtils;
 public class TwitchConnection {
     private TwitchClient client;
     private String username;
-
-    public TwitchConnection() {
-        if (AuthConfig.instance.twitchAutoConnect.value()) this.connect();
-    }
 
     public void toggleConnected() {
         if (!this.hasClient()) this.connect();

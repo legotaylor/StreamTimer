@@ -1,3 +1,10 @@
+/*
+    StreamTimer
+    Contributor(s): dannytaylor
+    Github: https://github.com/legotaylor/StreamTimer
+    Licence: LGPL-3.0
+*/
+
 package dev.dannytaylor.streamtimer.render;
 
 import com.jogamp.opengl.GL;
@@ -6,6 +13,7 @@ import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
+import dev.dannytaylor.streamtimer.integration.websocket.WebSocketIntegration;
 
 import java.awt.*;
 import java.nio.ByteBuffer;
@@ -17,7 +25,6 @@ public class GLRenderer implements GLEventListener {
     private ByteBuffer buffer;
     private long startTime;
 
-    private GLShaderRegistry shaderRegistry;
     private int shaderProgram;
 
     @Override
@@ -25,11 +32,11 @@ public class GLRenderer implements GLEventListener {
         GL2 gl = drawable.getGL().getGL2();
 
         try {
-            this.shaderRegistry = new GLShaderRegistry(gl);
-            this.shaderProgram = this.shaderRegistry.linkProgram(gl);
+            GLShaderRegistry shaderRegistry = new GLShaderRegistry(gl);
+            this.shaderProgram = shaderRegistry.linkProgram(gl);
             this.startTime = System.currentTimeMillis();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception error) {
+            System.err.println("Failed to register glsl shaders: "+ error);
         }
 
         int[] ids = new int[1];
@@ -44,8 +51,6 @@ public class GLRenderer implements GLEventListener {
         gl.glTexParameteri(GL2.GL_TEXTURE_2D, GL2.GL_TEXTURE_WRAP_T, GL2.GL_CLAMP);
 
         gl.glEnable(GL2.GL_TEXTURE_2D);
-        gl.glEnable(GL2.GL_BLEND);
-        gl.glBlendFunc(GL2.GL_SRC_ALPHA, GL2.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     @Override
@@ -62,7 +67,6 @@ public class GLRenderer implements GLEventListener {
 
         if (this.buffer != null) {
             GL2 gl = drawable.getGL().getGL2();
-            clear(gl);
             int windowWidth = drawable.getSurfaceWidth();
             int windowHeight = drawable.getSurfaceHeight();
 
@@ -79,6 +83,9 @@ public class GLRenderer implements GLEventListener {
             gl.glUniform1f(gl.glGetUniformLocation(this.shaderProgram, "uFinished"), StreamTimerMain.timer.isFinished() ? 1.0F : 0.0F);
             gl.glBindTexture(GL2.GL_TEXTURE_2D, this.texID);
 
+            gl.glClearColor(0.0F, 0.0F, 0.0F, 0.0F);
+            gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
+
             int width = StreamTimerMain.textRenderer.getWidth();
             int height = StreamTimerMain.textRenderer.getHeight();
 
@@ -91,19 +98,19 @@ public class GLRenderer implements GLEventListener {
             float scaledWidth = width * scale;
             float scaledHeight = height * scale;
 
-            float offsetX = (windowWidth - scaledWidth) / 2f;
-            float offsetY = (windowHeight - scaledHeight) / 2f;
+            float offsetX = (windowWidth - scaledWidth) / 2F;
+            float offsetY = (windowHeight - scaledHeight) / 2F;
 
-            float left = -1f + (offsetX / windowWidth) * 2f;
-            float right = left + (scaledWidth / windowWidth) * 2f;
-            float top = 1f - (offsetY / windowHeight) * 2f;
-            float bottom = top - (scaledHeight / windowHeight) * 2f;
+            float left = -1F + (offsetX / windowWidth) * 2F;
+            float right = left + (scaledWidth / windowWidth) * 2F;
+            float top = 1F - (offsetY / windowHeight) * 2F;
+            float bottom = top - (scaledHeight / windowHeight) * 2F;
 
             float[] vertices = {
-                    left,  bottom, 0f, 1f,
-                    right, bottom, 1f, 1f,
-                    right, top,    1f, 0f,
-                    left,  top,    0f, 0f
+                    left, bottom, 0F, 1F,
+                    right, bottom, 1F, 1F,
+                    right, top, 1F, 0F,
+                    left, top, 0F, 0F
             };
 
             FloatBuffer vertexBuffer = ByteBuffer
@@ -131,12 +138,28 @@ public class GLRenderer implements GLEventListener {
             gl.glDisableVertexAttribArray(texLoc);
 
             gl.glUseProgram(0);
+
+            ByteBuffer frameBuffer = ByteBuffer.allocateDirect(width * height * 4);
+            frameBuffer.order(ByteOrder.nativeOrder());
+            gl.glReadPixels(0, 0, width, height, GL2.GL_RGBA, GL2.GL_UNSIGNED_BYTE, frameBuffer);
+
+            byte[] frame = new byte[frameBuffer.remaining()];
+            frameBuffer.get(frame);
+            int rowSize = width * 4;
+            byte[] tempRow = new byte[rowSize];
+            for (int y = 0; y < height / 2; y++) {
+                int topRowStart = y * rowSize;
+                int bottomRowStart = (height - y - 1) * rowSize;
+                System.arraycopy(frame, topRowStart, tempRow, 0, rowSize);
+                System.arraycopy(frame, bottomRowStart, frame, topRowStart, rowSize);
+                System.arraycopy(tempRow, 0, frame, bottomRowStart, rowSize);
+            }
+            this.sendFrameToWebSocket(frame);
         }
     }
 
-    public void clear(GL2 gl) {
-        gl.glClearColor(0.0F, 0.0F, 0.0F, 0.0F);
-        gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
+    private void sendFrameToWebSocket(byte[] frame) {
+        if (WebSocketIntegration.isConnected()) WebSocketIntegration.sendFrame(frame);
     }
 
     @Override

@@ -1,3 +1,10 @@
+/*
+    StreamTimer
+    Contributor(s): dannytaylor
+    Github: https://github.com/legotaylor/StreamTimer
+    Licence: LGPL-3.0
+*/
+
 package dev.dannytaylor.streamtimer.render;
 
 import com.jogamp.opengl.GLCapabilities;
@@ -10,13 +17,16 @@ public class GLRendererPanel extends GLJPanel implements TimerPanel {
 
     public GLRendererPanel(GLCapabilities capabilities) {
         super(capabilities);
+        this.setDoubleBuffered(true);
         this.glRenderer = new GLRenderer();
         this.addGLEventListener(this.glRenderer);
+        this.setOpaque(false);
     }
 
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        this.setBackground(new Color(0, 0, 0, 0));
     }
 
     public int getTextureID() {

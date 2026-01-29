@@ -1,3 +1,10 @@
+/*
+    StreamTimer
+    Contributor(s): dannytaylor
+    Github: https://github.com/legotaylor/StreamTimer
+    Licence: LGPL-3.0
+*/
+
 package dev.dannytaylor.streamtimer.integration.twitch;
 
 import com.github.twitch4j.common.enums.CommandPermission;

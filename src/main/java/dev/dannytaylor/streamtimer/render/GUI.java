@@ -1,3 +1,10 @@
+/*
+    StreamTimer
+    Contributor(s): dannytaylor
+    Github: https://github.com/legotaylor/StreamTimer
+    Licence: LGPL-3.0
+*/
+
 package dev.dannytaylor.streamtimer.render;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
@@ -8,14 +15,22 @@ import dev.dannytaylor.streamtimer.config.RenderMode;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
-import dev.dannytaylor.streamtimer.util.NumberFilter;
+import dev.dannytaylor.streamtimer.util.IntegerFilter;
 import dev.dannytaylor.streamtimer.util.StreamTimerRunnable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.AbstractDocument;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 
 public class GUI {
@@ -56,7 +71,11 @@ public class GUI {
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weighty = 1;
-        this.timer = renderMode.usesGL() ? new GLRendererPanel(new GLCapabilities(GLProfile.get(GLProfile.GL2))) : new TextRendererPanel();
+        if (renderMode.usesGL()) {
+            GLCapabilities capabilities = new GLCapabilities(GLProfile.get(GLProfile.GL2));
+            capabilities.setAlphaBits(8);
+            this.timer = new GLRendererPanel(capabilities);
+        } else this.timer = new TextRendererPanel();
         this.timer.setPreferredSize(new Dimension(576, 144));
         this.window.add(this.timer, gbc);
         gbc.gridy = 1;
@@ -65,7 +84,9 @@ public class GUI {
         JPanel configureRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
         this.toggleButton = GUIWidgets.createButton("START");
         this.toggleButton.setToolTipText("Starts the timer");
-        this.toggleButton.addActionListener(e -> TimerUtils.toggleTimer());
+        this.toggleButton.addActionListener(e -> {
+            TimerUtils.toggleTimer();
+        });
         configureRow.add(this.toggleButton);
         this.configureButton = GUIWidgets.createButton("...");
         this.configureButton.setPreferredSize(new Dimension(26, 26));
@@ -86,6 +107,7 @@ public class GUI {
         onBeforeVisible.add((mode) -> StreamTimerMain.gui.createTextColorConfigTab(mode));
         onBeforeVisible.add((mode) -> StreamTimerMain.gui.createBackgroundColorConfigTab(mode));
         onBeforeVisible.addAll(GUI.runBeforeVisible);
+        onBeforeVisible.add((mode) -> StreamTimerMain.gui.createLicenseTab(mode));
 
         onConfigClose.add((mode) -> StreamTimerMain.gui.onTextColorConfigClose(mode));
         onConfigClose.add((mode) -> StreamTimerMain.gui.onBackgroundColorConfigClose(mode));
@@ -117,9 +139,9 @@ public class GUI {
         minutes.setToolTipText("Minutes");
         JTextField seconds = GUIWidgets.createText(StreamTimerConfig.instance.addSeconds.value(), 2);
         seconds.setToolTipText("Seconds");
-        ((AbstractDocument) hours.getDocument()).setDocumentFilter(new NumberFilter());
-        ((AbstractDocument) minutes.getDocument()).setDocumentFilter(new NumberFilter());
-        ((AbstractDocument) seconds.getDocument()).setDocumentFilter(new NumberFilter());
+        ((AbstractDocument) hours.getDocument()).setDocumentFilter(new IntegerFilter());
+        ((AbstractDocument) minutes.getDocument()).setDocumentFilter(new IntegerFilter());
+        ((AbstractDocument) seconds.getDocument()).setDocumentFilter(new IntegerFilter());
         JButton addButton = GUIWidgets.createButton("+");
         addButton.setToolTipText("Add time");
         addButton.addActionListener(e -> {
@@ -205,6 +227,11 @@ public class GUI {
 
             @Override
             public void windowIconified(WindowEvent e) {
+                if (window instanceof JFrame && StreamTimerConfig.instance.forceFocus.value()) {
+                    window.setVisible(true);
+                    ((JFrame)window).setExtendedState(Frame.NORMAL);
+                    window.requestFocus();
+                }
             }
 
             @Override
@@ -356,5 +383,28 @@ public class GUI {
 
     private void onBackgroundColorConfigClose(RenderMode renderMode) {
         StreamTimerConfig.instance.backgroundColor.setValue(this.backgroundColorChooser.getColor().getRGB(), true);
+    }
+
+    private void createLicenseTab(RenderMode renderMode) {
+        JPanel licenceTab = new JPanel();
+        licenceTab.setLayout(new BorderLayout());
+        StringBuilder html = new StringBuilder();
+        try (InputStream inputStream = new FileInputStream(Path.of(StaticVariables.name + "Assets/LICENSE").toFile())) {
+            try (Scanner reader = new Scanner(inputStream)) {
+                html.append("<html><body style='margin:0'><pre style='margin:0'>");
+                while (reader.hasNextLine()) {
+                    html.append(reader.nextLine()).append("\n");
+                }
+                html.append("</pre></body></html>");
+            }
+        } catch (Exception error) {
+            System.err.println("Failed to load licence tab: " + error);
+            html = new StringBuilder("<html><body><p style='color:red;'>Failed to load content.</p></body></html>");
+        }
+        JEditorPane licence = new JEditorPane("text/html", html.toString());
+        licence.setEditable(false);
+        licence.setCaretPosition(0);
+        licenceTab.add(new JScrollPane(licence), BorderLayout.CENTER);
+        this.configureTabs.addTab("Licence", licenceTab);
     }
 }

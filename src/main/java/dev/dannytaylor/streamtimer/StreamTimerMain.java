@@ -1,3 +1,10 @@
+/*
+    StreamTimer
+    Contributor(s): dannytaylor
+    Github: https://github.com/legotaylor/StreamTimer
+    Licence: LGPL-3.0
+*/
+
 package dev.dannytaylor.streamtimer;
 
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
@@ -5,14 +12,12 @@ import dev.dannytaylor.streamtimer.data.StaticVariables;
 import dev.dannytaylor.streamtimer.integration.IntegrationRegistry;
 import dev.dannytaylor.streamtimer.integration.twitch.TwitchIntegration;
 import dev.dannytaylor.streamtimer.render.GUI;
-import dev.dannytaylor.streamtimer.util.Resources;
 import dev.dannytaylor.streamtimer.render.TextRenderer;
 import dev.dannytaylor.streamtimer.timer.Timer;
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
-import dev.dannytaylor.streamtimer.util.StreamTimerRunnable;
+import dev.dannytaylor.streamtimer.util.Resources;
 
 import javax.swing.*;
-import java.util.ArrayList;
 
 public class StreamTimerMain {
     public static boolean running = true;

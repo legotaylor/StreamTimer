@@ -1,3 +1,10 @@
+/*
+    StreamTimer
+    Contributor(s): dannytaylor
+    Github: https://github.com/legotaylor/StreamTimer
+    Licence: LGPL-3.0
+*/
+
 package dev.dannytaylor.streamtimer.config;
 
 import dev.dannytaylor.streamtimer.data.StaticVariables;
@@ -39,6 +46,9 @@ public class StreamTimerConfig extends ReflectiveConfig {
     public final TrackedValue<String> addHours = this.value("01");
     public final TrackedValue<String> addMinutes = this.value("00");
     public final TrackedValue<String> addSeconds = this.value("00");
+
+    public final TrackedValue<Integer> webSocketPort = this.value(34251);
+    public final TrackedValue<Boolean> webSocketAutoConnect = this.value(false);
 
     public final TwitchTimeSettings twitchTimes = new TwitchTimeSettings();
 

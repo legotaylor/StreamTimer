@@ -1,3 +1,10 @@
+/*
+    StreamTimer
+    Contributor(s): dannytaylor
+    Github: https://github.com/legotaylor/StreamTimer
+    Licence: LGPL-3.0
+*/
+
 package dev.dannytaylor.streamtimer.integration.twitch;
 
 import dev.dannytaylor.streamtimer.StreamTimerMain;
@@ -8,7 +15,7 @@ import dev.dannytaylor.streamtimer.integration.AuthConfig;
 import dev.dannytaylor.streamtimer.render.GUI;
 import dev.dannytaylor.streamtimer.render.GUIWidgets;
 import dev.dannytaylor.streamtimer.util.FloatFilter;
-import dev.dannytaylor.streamtimer.util.NumberFilter;
+import dev.dannytaylor.streamtimer.util.IntegerFilter;
 
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
@@ -27,15 +34,17 @@ public class TwitchIntegration {
     public static JTextField channel;
 
     public static void bootstrap() {
-        GUI.runBeforeVisible.add(TwitchIntegration::createConfigTab);
+        GUI.runBeforeVisible.add(TwitchIntegration::runBeforeVisible);
         GUI.runOnConfigClose.add((renderMode) -> save());
     }
 
-    private static void createConfigTab(RenderMode renderMode) {
+    private static void runBeforeVisible(RenderMode renderMode) {
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("Times", getTimesTab(renderMode));
         tabs.addTab("Connection", getConnectionTab(renderMode));
         StreamTimerMain.gui.configureTabs.addTab("Twitch Integration", tabs);
+
+        if (AuthConfig.instance.twitchAutoConnect.value()) twitch.connect();
     }
 
     private static JPanel getTimesTab(RenderMode renderMode) {
@@ -56,7 +65,7 @@ public class TwitchIntegration {
         tab.add(follow, gbc);
 
         JTextField followSeconds = GUIWidgets.createText(String.valueOf(StreamTimerConfig.instance.twitchTimes.followSeconds.value()));
-        ((AbstractDocument) followSeconds.getDocument()).setDocumentFilter(new NumberFilter());
+        ((AbstractDocument) followSeconds.getDocument()).setDocumentFilter(new IntegerFilter());
         gbc.gridx = 1;
         tab.add(followSeconds, gbc);
 
@@ -71,7 +80,7 @@ public class TwitchIntegration {
         tab.add(bits, gbc);
 
         JTextField bitsSeconds = GUIWidgets.createText(String.valueOf(StreamTimerConfig.instance.twitchTimes.bitsSeconds.value()));
-        ((AbstractDocument) bitsSeconds.getDocument()).setDocumentFilter(new NumberFilter());
+        ((AbstractDocument) bitsSeconds.getDocument()).setDocumentFilter(new IntegerFilter());
         gbc.gridx = 1;
         tab.add(bitsSeconds, gbc);
 
@@ -80,7 +89,7 @@ public class TwitchIntegration {
         tab.add(secondsPerBitsLabel, gbc);
 
         JTextField perBits = GUIWidgets.createText(String.valueOf(StreamTimerConfig.instance.twitchTimes.bits.value()));
-        ((AbstractDocument) perBits.getDocument()).setDocumentFilter(new NumberFilter());
+        ((AbstractDocument) perBits.getDocument()).setDocumentFilter(new IntegerFilter());
         gbc.gridx = 3;
         tab.add(perBits, gbc);
 
@@ -88,17 +97,17 @@ public class TwitchIntegration {
         gbc.gridx = 4;
         tab.add(bitsLabel, gbc);
 
-        JComboBox<TwitchPermission> moneyCombo = new JComboBox<>(TwitchPermission.values());
-        moneyCombo.setSelectedItem(StreamTimerConfig.instance.twitchTimes.commandEnabled.value());
-        moneyCombo.addActionListener(e ->
-                StreamTimerConfig.instance.twitchTimes.commandEnabled.setValue((TwitchPermission) moneyCombo.getSelectedItem(), true)
+        JComboBox<TwitchPermission> commandCombo = new JComboBox<>(TwitchPermission.values());
+        commandCombo.setSelectedItem(StreamTimerConfig.instance.twitchTimes.commandEnabled.value());
+        commandCombo.addActionListener(e ->
+                StreamTimerConfig.instance.twitchTimes.commandEnabled.setValue((TwitchPermission) commandCombo.getSelectedItem(), true)
         );
         gbc.gridx = 0;
         gbc.gridy = row++;
-        tab.add(moneyCombo, gbc);
+        tab.add(commandCombo, gbc);
 
         JTextField moneySeconds = GUIWidgets.createText(String.valueOf(StreamTimerConfig.instance.twitchTimes.moneySeconds.value()));
-        ((AbstractDocument) moneySeconds.getDocument()).setDocumentFilter(new NumberFilter());
+        ((AbstractDocument) moneySeconds.getDocument()).setDocumentFilter(new IntegerFilter());
         gbc.gridx = 1;
         tab.add(moneySeconds, gbc);
 
@@ -122,7 +131,7 @@ public class TwitchIntegration {
         tab.add(tierOne, gbc);
 
         JTextField tierOneSeconds = GUIWidgets.createText(String.valueOf(StreamTimerConfig.instance.twitchTimes.tierOneSeconds.value()));
-        ((AbstractDocument) tierOneSeconds.getDocument()).setDocumentFilter(new NumberFilter());
+        ((AbstractDocument) tierOneSeconds.getDocument()).setDocumentFilter(new IntegerFilter());
         gbc.gridx = 1;
         tab.add(tierOneSeconds, gbc);
 
@@ -140,7 +149,7 @@ public class TwitchIntegration {
         tab.add(tierTwo, gbc);
 
         JTextField tierTwoSeconds = GUIWidgets.createText(String.valueOf(StreamTimerConfig.instance.twitchTimes.tierTwoSeconds.value()));
-        ((AbstractDocument) tierTwoSeconds.getDocument()).setDocumentFilter(new NumberFilter());
+        ((AbstractDocument) tierTwoSeconds.getDocument()).setDocumentFilter(new IntegerFilter());
         gbc.gridx = 1;
         tab.add(tierTwoSeconds, gbc);
 
@@ -158,7 +167,7 @@ public class TwitchIntegration {
         tab.add(tierThree, gbc);
 
         JTextField tierThreeSeconds = GUIWidgets.createText(String.valueOf(StreamTimerConfig.instance.twitchTimes.tierThreeSeconds.value()));
-        ((AbstractDocument) tierThreeSeconds.getDocument()).setDocumentFilter(new NumberFilter());
+        ((AbstractDocument) tierThreeSeconds.getDocument()).setDocumentFilter(new IntegerFilter());
         gbc.gridx = 1;
         tab.add(tierThreeSeconds, gbc);
 
@@ -204,7 +213,7 @@ public class TwitchIntegration {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         int row = 0;
         gbc.gridx = 0;
-        gbc.gridy = row++;
+        gbc.gridy = row;
         gbc.weightx = 1.0;
         tab.add(Box.createHorizontalGlue(), gbc);
 

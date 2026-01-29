@@ -1,3 +1,10 @@
+/*
+    StreamTimer
+    Contributor(s): dannytaylor
+    Github: https://github.com/legotaylor/StreamTimer
+    Licence: LGPL-3.0
+*/
+
 package dev.dannytaylor.streamtimer.integration.twitch;
 
 import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
@@ -90,35 +97,16 @@ public class TwitchAuthenticator {
     }
 
     private String refreshAccessToken(String refreshToken) throws IOException, InterruptedException {
-        return parseToken(HttpClient.newHttpClient().send(HttpRequest.newBuilder()
-                .uri(URI.create(tokenURL))
-                .POST(HttpRequest.BodyPublishers.ofString("grant_type=refresh_token" +
-                        "&refresh_token=" + encode(refreshToken) +
-                        "&client_id=" + this.clientId +
-                        "&client_secret=" + clientSecret
-                )).header("Content-Type", "application/x-www-form-urlencoded")
-                .build(), HttpResponse.BodyHandlers.ofString()).body());
+        return parseToken(HttpClient.newHttpClient().send(HttpRequest.newBuilder().uri(URI.create(tokenURL)).POST(HttpRequest.BodyPublishers.ofString("grant_type=refresh_token" + "&refresh_token=" + encode(refreshToken) + "&client_id=" + this.clientId + "&client_secret=" + clientSecret)).header("Content-Type", "application/x-www-form-urlencoded").build(), HttpResponse.BodyHandlers.ofString()).body());
     }
 
     private String getToken(String code) throws IOException, InterruptedException {
-        return parseToken(HttpClient.newHttpClient().send(HttpRequest.newBuilder()
-                .uri(URI.create(tokenURL))
-                .POST(HttpRequest.BodyPublishers.ofString(
-                        "client_id=" + this.clientId +
-                        "&client_secret=" + this.clientSecret +
-                        "&code=" + code +
-                        "&grant_type=authorization_code" +
-                        "&redirect_uri=" + encode(getRedirect())
-                )).header("Content-Type", "application/x-www-form-urlencoded")
-                .build(), HttpResponse.BodyHandlers.ofString()).body());
+        return parseToken(HttpClient.newHttpClient().send(HttpRequest.newBuilder().uri(URI.create(tokenURL)).POST(HttpRequest.BodyPublishers.ofString("client_id=" + this.clientId + "&client_secret=" + this.clientSecret + "&code=" + code + "&grant_type=authorization_code" + "&redirect_uri=" + encode(getRedirect()))).header("Content-Type", "application/x-www-form-urlencoded").build(), HttpResponse.BodyHandlers.ofString()).body());
     }
 
     private Map<String, String> parseQuery(String query) {
         if (query == null || query.isBlank()) return Map.of();
-
-        return Arrays.stream(query.split("&"))
-                .map(p -> p.split("="))
-                .collect(Collectors.toMap(p -> p[0], p -> p[1]));
+        return Arrays.stream(query.split("&")).map(p -> p.split("=")).collect(Collectors.toMap(p -> p[0], p -> p[1]));
     }
 
     private void startCallback(CompletableFuture<String> codeFuture) throws IOException {
@@ -136,7 +124,7 @@ public class TwitchAuthenticator {
         server.createContext("/callback", exchange -> {
             Map<String, String> parameters = parseQuery(exchange.getRequestURI().getQuery());
             String code = parameters.get("code");
-            String response = "<html><body><h2>" + StaticVariables.name + " Twitch Integration successful!</h2><p>You may now close this window.</p></body></html>";
+            String response = "<html><head><style>body {color: #ffffff;background-color: #3c3f41;font-family: sans-serif;display: flex;justify-content: center;align-items: center;height: 200px;margin: auto;width: 50%;padding: 10px;text-align: center;}</style><title>" + StaticVariables.name + " - Authentication complete</title></head><body><div><h2>Authentication complete</h2><p>You may now close this window</p></div></body></html>";
             exchange.sendResponseHeaders(200, response.length());
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(response.getBytes());
@@ -152,11 +140,7 @@ public class TwitchAuthenticator {
     }
 
     private String getAuthURL() {
-        return authURL +
-                "?client_id=" + this.clientId +
-                "&redirect_uri=" + encode(getRedirect()) +
-                "&response_type=code" +
-                "&scope=" + encode(scopes);
+        return authURL + "?client_id=" + this.clientId + "&redirect_uri=" + encode(getRedirect()) + "&response_type=code" + "&scope=" + encode(scopes);
     }
 
     private String getRedirect() {
