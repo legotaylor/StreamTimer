@@ -5,12 +5,22 @@ import javax.swing.text.Document;
 import java.awt.*;
 
 public class GUIWidgets {
+    public static JCheckBox createCheckbox(String name, boolean selected) {
+        JCheckBox checkBox = new JCheckBox(name);
+        checkBox.setSelected(selected);
+        return (JCheckBox) setHandCursor(checkBox);
+    }
+
+    public static JCheckBox createCheckbox(boolean selected) {
+        return createCheckbox(null, selected);
+    }
+
     public static JCheckBox createCheckbox(String name) {
-        return (JCheckBox) setHandCursor(new JCheckBox(name));
+        return createCheckbox(name, false);
     }
 
     public static JCheckBox createCheckbox() {
-        return createCheckbox(null);
+        return createCheckbox(false);
     }
 
     public static JButton createButton() {

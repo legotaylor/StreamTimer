@@ -10,6 +10,7 @@ import java.nio.file.Path;
 
 public class Timer {
     private boolean running;
+    private boolean finished;
     private long time = StreamTimerConfig.instance.time.value();
     private long lastTickTime = 0L;
 
@@ -17,6 +18,9 @@ public class Timer {
     }
 
     public void tick() {
+        if (this.time > 0) {
+            this.finished = false;
+        }
         if (!this.running) {
             lastTickTime = 0;
             return;
@@ -27,6 +31,7 @@ public class Timer {
         if (this.time == 0) {
             if (!StreamTimerConfig.instance.reversed.value()) {
                 this.running = false;
+                this.finished = true;
                 this.time = 0;
                 if (StreamTimerConfig.instance.finishSound.value()) {
                     SoundPlayer.playSound(new File(Path.of(StaticVariables.name + "Assets").toFile(), "finishSound.wav"));
@@ -50,13 +55,14 @@ public class Timer {
     }
 
     public void start() {
-        running = true;
+        this.running = true;
+        this.finished = false;
         save(true);
         System.out.println("[Stream Timer] Started Timer");
     }
 
     public void stop() {
-        running = false;
+        this.running = false;
         save(true);
         System.out.println("[Stream Timer] Stopped Timer");
     }
@@ -73,6 +79,10 @@ public class Timer {
 
     public boolean isRunning() {
         return this.running;
+    }
+
+    public boolean isFinished() {
+        return this.finished;
     }
 
     public void save(boolean toFile) {

@@ -9,11 +9,13 @@ import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
 import dev.dannytaylor.streamtimer.util.NumberFilter;
+import dev.dannytaylor.streamtimer.util.StreamTimerRunnable;
 
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 
 public class GUI {
@@ -23,11 +25,15 @@ public class GUI {
     public String initMessageText = "⠀";
     public JButton toggleButton;
     public JButton configureButton;
+    public JTabbedPane configureTabs;
 
     public CountDownLatch latch = new CountDownLatch(1);
 
     public SetupGUI setupGUI;
     public static Tray tray;
+
+    public static final ArrayList<StreamTimerRunnable> runBeforeVisible = new ArrayList<>();
+    public static final ArrayList<StreamTimerRunnable> runOnConfigClose = new ArrayList<>();
 
     public GUI() {
         setup();
@@ -38,7 +44,7 @@ public class GUI {
         setTheme(this.window);
     }
 
-    public void init(RenderMode renderMode) {
+    public void create(RenderMode renderMode) {
         boolean isDialog = renderMode.getRenderType().equals(RenderMode.RenderType.DIALOG);
         this.window = isDialog ? new JDialog((Frame) null, StaticVariables.name, false) : new JFrame(StaticVariables.name);
         this.window.setLayout(new GridBagLayout());
@@ -50,7 +56,6 @@ public class GUI {
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weighty = 1;
-        System.out.println("DEBUG: " + renderMode.usesGL());
         this.timer = renderMode.usesGL() ? new GLRendererPanel(new GLCapabilities(GLProfile.get(GLProfile.GL2))) : new TextRendererPanel();
         this.timer.setPreferredSize(new Dimension(576, 144));
         this.window.add(this.timer, gbc);
@@ -60,116 +65,46 @@ public class GUI {
         JPanel configureRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
         this.toggleButton = GUIWidgets.createButton("START");
         this.toggleButton.setToolTipText("Starts the timer");
-        this.toggleButton.addActionListener(e -> toggleTimer());
+        this.toggleButton.addActionListener(e -> TimerUtils.toggleTimer());
         configureRow.add(this.toggleButton);
-        configureButton = GUIWidgets.createButton("...");
-        configureButton.setPreferredSize(new Dimension(26, 26));
-        configureButton.setToolTipText("Configure");
-        configureButton.addActionListener(e -> {
-            configureButton.setEnabled(false);
-            JDialog configureDialog = new JDialog(this.window);
-            configureDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            configureDialog.setTitle(StaticVariables.name + ": Configure");
-            JTabbedPane tabs = new JTabbedPane();
-            JPanel fontTab = new JPanel(new GridBagLayout());
-            GridBagConstraints fontTabGbc = new GridBagConstraints();
-            fontTabGbc.insets = new Insets(8, 8, 8, 8);
-            fontTabGbc.fill = GridBagConstraints.HORIZONTAL;
-            fontTabGbc.anchor = GridBagConstraints.CENTER;
-            fontTabGbc.gridx = 0;
-            fontTabGbc.gridy = 0;
-            JLabel fontLabel = new JLabel("Font:");
-            fontLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-            fontTab.add(fontLabel, fontTabGbc);
-            fontTabGbc.gridx = 1;
-            JComboBox<String> fontCombo = new JComboBox<>(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
-            fontCombo.setSelectedItem(StreamTimerConfig.instance.font.value());
-            fontTab.add(fontCombo, fontTabGbc);
-            fontTabGbc.gridx = 0;
-            fontTabGbc.gridy++;
-            JLabel styleLabel = new JLabel("Style:");
-            styleLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-            fontTab.add(styleLabel, fontTabGbc);
-            fontTabGbc.gridx = 1;
-            String[] styles = {"Plain", "Bold", "Italic", "Bold Italic"};
-            JComboBox<String> styleCombo = new JComboBox<>(styles);
-            styleCombo.setSelectedIndex(StreamTimerConfig.instance.style.value());
-            fontTab.add(styleCombo, fontTabGbc);
-            fontTabGbc.gridx = 0;
-            fontTabGbc.gridy++;
-            JLabel sizeLabel = new JLabel("Size:");
-            sizeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-            fontTab.add(sizeLabel, fontTabGbc);
-            fontTabGbc.gridx = 1;
-            JSpinner sizeSpinner = new JSpinner(new SpinnerNumberModel(StreamTimerConfig.instance.size.value().intValue(), 8, 200, 1));
-            fontTab.add(sizeSpinner, fontTabGbc);
+        this.configureButton = GUIWidgets.createButton("...");
+        this.configureButton.setPreferredSize(new Dimension(26, 26));
+        this.configureButton.setToolTipText("Configure");
 
-            fontCombo.addActionListener(f -> StreamTimerConfig.instance.font.setValue((String) fontCombo.getSelectedItem(), true));
-            styleCombo.addActionListener(g -> StreamTimerConfig.instance.style.setValue(styleCombo.getSelectedIndex(), true));
-            sizeSpinner.addChangeListener(h -> StreamTimerConfig.instance.size.setValue((Integer) sizeSpinner.getValue(), true));
-            tabs.addTab("Font", fontTab);
+        JDialog configureDialog = new JDialog(this.window);
+        configureDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        configureDialog.setTitle(StaticVariables.name + ": Configure");
 
-            JPanel textColorTab = new JPanel();
-            textColorTab.setLayout(new BoxLayout(textColorTab, BoxLayout.Y_AXIS));
-            textColorTab.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+        if (StreamTimerMain.icon != null) configureDialog.setIconImage(StreamTimerMain.icon.getImage());
 
-            if (renderMode.usesGL()) {
-                JPanel textCheckboxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        this.configureTabs = new JTabbedPane();
 
-                JCheckBox rainbow = GUIWidgets.createCheckbox("Rainbow Mode");
-                rainbow.setToolTipText("When enabled, the timer text renders with a coloured effect.");
-                rainbow.setSelected(StreamTimerConfig.instance.rainbow.value());
-                rainbow.addChangeListener(i -> StreamTimerConfig.instance.rainbow.setValue(rainbow.isSelected(), true));
-                textCheckboxPanel.add(rainbow);
-                JCheckBox dimWhenStopped = GUIWidgets.createCheckbox("Dim when Timer Stopped");
-                dimWhenStopped.setToolTipText("When enabled, the timer text renders at 50% colour intensity.");
-                dimWhenStopped.setSelected(StreamTimerConfig.instance.dimWhenStopped.value());
-                dimWhenStopped.addChangeListener(i -> StreamTimerConfig.instance.dimWhenStopped.setValue(dimWhenStopped.isSelected(), true));
-                textCheckboxPanel.add(dimWhenStopped);
-                textColorTab.add(textCheckboxPanel);
-                textColorTab.add(Box.createVerticalStrut(6));
+        ArrayList<StreamTimerRunnable> onBeforeVisible = new ArrayList<>();
+        ArrayList<StreamTimerRunnable> onConfigClose = new ArrayList<>();
+
+        onBeforeVisible.add((mode) -> StreamTimerMain.gui.createFontConfigTab(mode));
+        onBeforeVisible.add((mode) -> StreamTimerMain.gui.createTextColorConfigTab(mode));
+        onBeforeVisible.add((mode) -> StreamTimerMain.gui.createBackgroundColorConfigTab(mode));
+        onBeforeVisible.addAll(GUI.runBeforeVisible);
+
+        onConfigClose.add((mode) -> StreamTimerMain.gui.onTextColorConfigClose(mode));
+        onConfigClose.add((mode) -> StreamTimerMain.gui.onBackgroundColorConfigClose(mode));
+        onConfigClose.addAll(GUI.runOnConfigClose);
+
+        configureDialog.add(this.configureTabs);
+        configureDialog.setResizable(false);
+        configureDialog.pack();
+        configureDialog.setMinimumSize(new Dimension(700, 500));
+        configureDialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                for (StreamTimerRunnable runnable : onConfigClose) runnable.run(renderMode);
+                configureButton.setEnabled(true);
             }
-
-            Color textColor = new Color(StreamTimerConfig.instance.textColor.value(), true);
-            JColorChooser textColorChooser = new JColorChooser(textColor);
-            textColorChooser.setBorder(BorderFactory.createEmptyBorder());
-            textColorChooser.getSelectionModel().addChangeListener(l -> StreamTimerConfig.instance.textColor.setValue(textColorChooser.getColor().getRGB(), false));
-            textColorTab.add(textColorChooser);
-            tabs.addTab("Text Colour", textColorTab);
-
-            JPanel backgroundColorTab = new JPanel();
-            backgroundColorTab.setLayout(new BoxLayout(backgroundColorTab, BoxLayout.Y_AXIS));
-            backgroundColorTab.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
-            if (renderMode.usesGL()) {
-                JPanel backgroundCheckboxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-                JCheckBox background = GUIWidgets.createCheckbox("Render Background");
-                background.setToolTipText("When enabled, renders a solid coloured background which can be chroma-keyed out in some window capturing applications.");
-                background.setSelected(StreamTimerConfig.instance.background.value());
-                background.addChangeListener(f -> StreamTimerConfig.instance.background.setValue(background.isSelected(), true));
-                backgroundCheckboxPanel.add(background);
-                backgroundColorTab.add(backgroundCheckboxPanel);
-                backgroundColorTab.add(Box.createVerticalStrut(6));
-            }
-            Color backgroundColor = new Color(StreamTimerConfig.instance.backgroundColor.value(), true);
-            JColorChooser backgroundColorChooser = new JColorChooser(backgroundColor);
-            backgroundColorChooser.setBorder(BorderFactory.createEmptyBorder());
-            backgroundColorChooser.getSelectionModel().addChangeListener(l -> StreamTimerConfig.instance.backgroundColor.setValue(backgroundColorChooser.getColor().getRGB(), false));
-            backgroundColorTab.add(backgroundColorChooser);
-            tabs.addTab("Background Colour", backgroundColorTab);
-
-            configureDialog.add(tabs);
-            configureDialog.setResizable(false);
-            configureDialog.pack();
-            configureDialog.setMinimumSize(new Dimension(700, 400));
+        });
+        this.configureButton.addActionListener(e -> {
+            this.configureButton.setEnabled(false);
             configureDialog.setLocationRelativeTo(this.window);
-            configureDialog.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosing(WindowEvent e) {
-                    StreamTimerConfig.instance.textColor.setValue(textColorChooser.getColor().getRGB(), true);
-                    StreamTimerConfig.instance.backgroundColor.setValue(backgroundColorChooser.getColor().getRGB(), true);
-                    configureButton.setEnabled(true);
-                }
-            });
             configureDialog.setVisible(true);
         });
         configureRow.add(configureButton);
@@ -285,6 +220,8 @@ public class GUI {
             }
         });
 
+        for (StreamTimerRunnable runnable : onBeforeVisible) runnable.run(renderMode);
+
         this.window.setVisible(true);
         this.latch.countDown();
     }
@@ -318,17 +255,106 @@ public class GUI {
         return component;
     }
 
-    public void toggleTimer() {
-        if (StreamTimerMain.timer.isRunning()) {
-            StreamTimerMain.timer.stop();
-            this.messageText.setText("Stopped timer!");
-            this.toggleButton.setText("START");
-            this.toggleButton.setToolTipText("Starts the timer");
-        } else {
-            StreamTimerMain.timer.start();
-            this.messageText.setText("Started timer!");
-            this.toggleButton.setText("STOP");
-            this.toggleButton.setToolTipText("Stops the timer");
+    private JColorChooser textColorChooser;
+    private JColorChooser backgroundColorChooser;
+
+    private void createFontConfigTab(RenderMode renderMode) {
+        JPanel tab = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        JLabel fontLabel = new JLabel("Font:");
+        fontLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        tab.add(fontLabel, gbc);
+        gbc.gridx = 1;
+        JComboBox<String> fontCombo = new JComboBox<>(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
+        fontCombo.setSelectedItem(StreamTimerConfig.instance.font.value());
+        tab.add(fontCombo, gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        JLabel styleLabel = new JLabel("Style:");
+        styleLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        tab.add(styleLabel, gbc);
+        gbc.gridx = 1;
+        String[] styles = {"Plain", "Bold", "Italic", "Bold Italic"};
+        JComboBox<String> styleCombo = new JComboBox<>(styles);
+        styleCombo.setSelectedIndex(StreamTimerConfig.instance.style.value());
+        tab.add(styleCombo, gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        JLabel sizeLabel = new JLabel("Size:");
+        sizeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        tab.add(sizeLabel, gbc);
+        gbc.gridx = 1;
+        JSpinner sizeSpinner = new JSpinner(new SpinnerNumberModel(StreamTimerConfig.instance.size.value().intValue(), 8, 200, 1));
+        tab.add(sizeSpinner, gbc);
+
+        fontCombo.addActionListener(f -> StreamTimerConfig.instance.font.setValue((String) fontCombo.getSelectedItem(), true));
+        styleCombo.addActionListener(g -> StreamTimerConfig.instance.style.setValue(styleCombo.getSelectedIndex(), true));
+        sizeSpinner.addChangeListener(h -> StreamTimerConfig.instance.size.setValue((Integer) sizeSpinner.getValue(), true));
+        this.configureTabs.addTab("Font", tab);
+    }
+
+    private void createTextColorConfigTab(RenderMode renderMode) {
+        JPanel textColorTab = new JPanel();
+        textColorTab.setLayout(new BoxLayout(textColorTab, BoxLayout.Y_AXIS));
+        textColorTab.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+
+        if (renderMode.usesGL()) {
+            JPanel textCheckboxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+
+            JCheckBox rainbow = GUIWidgets.createCheckbox("Rainbow Mode");
+            rainbow.setToolTipText("When enabled, the timer text renders with a coloured effect.");
+            rainbow.setSelected(StreamTimerConfig.instance.rainbow.value());
+            rainbow.addChangeListener(i -> StreamTimerConfig.instance.rainbow.setValue(rainbow.isSelected(), true));
+            textCheckboxPanel.add(rainbow);
+            JCheckBox dimWhenStopped = GUIWidgets.createCheckbox("Dim when Timer Stopped");
+            dimWhenStopped.setToolTipText("When enabled, the timer text renders at 50% colour intensity.");
+            dimWhenStopped.setSelected(StreamTimerConfig.instance.dimWhenStopped.value());
+            dimWhenStopped.addChangeListener(i -> StreamTimerConfig.instance.dimWhenStopped.setValue(dimWhenStopped.isSelected(), true));
+            textCheckboxPanel.add(dimWhenStopped);
+            textColorTab.add(textCheckboxPanel);
+            textColorTab.add(Box.createVerticalStrut(6));
         }
+
+        Color textColor = new Color(StreamTimerConfig.instance.textColor.value(), true);
+        this.textColorChooser = new JColorChooser(textColor);
+        this.textColorChooser.setBorder(BorderFactory.createEmptyBorder());
+        this.textColorChooser.getSelectionModel().addChangeListener(l -> StreamTimerConfig.instance.textColor.setValue(this.textColorChooser.getColor().getRGB(), false));
+        textColorTab.add(this.textColorChooser);
+        this.configureTabs.addTab("Text Colour", textColorTab);
+    }
+
+    private void onTextColorConfigClose(RenderMode renderMode) {
+        StreamTimerConfig.instance.textColor.setValue(this.textColorChooser.getColor().getRGB(), true);
+    }
+
+    private void createBackgroundColorConfigTab(RenderMode renderMode) {
+        JPanel backgroundColorTab = new JPanel();
+        backgroundColorTab.setLayout(new BoxLayout(backgroundColorTab, BoxLayout.Y_AXIS));
+        backgroundColorTab.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+        if (renderMode.usesGL()) {
+            JPanel backgroundCheckboxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            JCheckBox background = GUIWidgets.createCheckbox("Render Background");
+            background.setToolTipText("When enabled, renders a solid coloured background which can be chroma-keyed out in some window capturing applications.");
+            background.setSelected(StreamTimerConfig.instance.background.value());
+            background.addChangeListener(f -> StreamTimerConfig.instance.background.setValue(background.isSelected(), true));
+            backgroundCheckboxPanel.add(background);
+            backgroundColorTab.add(backgroundCheckboxPanel);
+            backgroundColorTab.add(Box.createVerticalStrut(6));
+        }
+        Color backgroundColor = new Color(StreamTimerConfig.instance.backgroundColor.value(), true);
+        this.backgroundColorChooser = new JColorChooser(backgroundColor);
+        this.backgroundColorChooser.setBorder(BorderFactory.createEmptyBorder());
+        this.backgroundColorChooser.getSelectionModel().addChangeListener(l -> StreamTimerConfig.instance.backgroundColor.setValue(this.backgroundColorChooser.getColor().getRGB(), false));
+        backgroundColorTab.add(this.backgroundColorChooser);
+        this.configureTabs.addTab("Background Colour", backgroundColorTab);
+    }
+
+    private void onBackgroundColorConfigClose(RenderMode renderMode) {
+        StreamTimerConfig.instance.backgroundColor.setValue(this.backgroundColorChooser.getColor().getRGB(), true);
     }
 }

@@ -33,25 +33,35 @@ public class TimerUtils {
     }
 
     public static long getSecondsFromString(String hours, String minutes, String seconds) {
+        return getSecondsFromString(hours, minutes, seconds, true);
+    }
+
+    public static long getSecondsFromString(String hours, String minutes, String seconds, boolean saveToConfig) {
         long h = 0;
-        try {
-            h = Integer.parseInt(hours);
-        } catch (NumberFormatException numberError) {
-            hours = StreamTimerConfig.instance.addHours.getDefaultValue();
+        if (hours != null && !hours.isBlank()) {
+            try {
+                h = Integer.parseInt(hours);
+            } catch (NumberFormatException numberError) {
+                hours = StreamTimerConfig.instance.addHours.getDefaultValue();
+            }
         } // it's probably just empty.
         long m = 0;
-        try {
-            m = Integer.parseInt(minutes);
-        } catch (NumberFormatException numberError) {
-            minutes = StreamTimerConfig.instance.addMinutes.getDefaultValue();
-        } // it's probably just empty.
+        if (minutes != null && !minutes.isBlank()) {
+            try {
+                m = Integer.parseInt(minutes);
+            } catch (NumberFormatException numberError) {
+                minutes = StreamTimerConfig.instance.addMinutes.getDefaultValue();
+            } // it's probably just empty.
+        }
         long s = 0;
-        try {
-            s = Integer.parseInt(seconds);
-        } catch (NumberFormatException numberError) {
-            seconds = StreamTimerConfig.instance.addSeconds.getDefaultValue();
-        } // it's probably just empty.
-        updateConfig(hours, minutes, seconds);
+        if (seconds != null && !seconds.isBlank()) {
+            try {
+                s = Integer.parseInt(seconds);
+            } catch (NumberFormatException numberError) {
+                seconds = StreamTimerConfig.instance.addSeconds.getDefaultValue();
+            } // it's probably just empty.
+        }
+        if (saveToConfig) updateConfig(hours, minutes, seconds);
         return getSeconds(h, m, s);
     }
 
@@ -88,5 +98,27 @@ public class TimerUtils {
         StreamTimerConfig.instance.addMinutes.setValue(String.format("%02d", m), false);
         StreamTimerConfig.instance.addSeconds.setValue(String.format("%02d", s), false);
         StreamTimerConfig.instance.save();
+    }
+
+    public static void toggleTimer() {
+        if (StreamTimerMain.timer.isRunning()) {
+            StreamTimerMain.timer.stop();
+            if (StreamTimerMain.gui != null) {
+                if (StreamTimerMain.gui.messageText != null) StreamTimerMain.gui.messageText.setText("Stopped timer!");
+                if (StreamTimerMain.gui.toggleButton != null) {
+                    StreamTimerMain.gui.toggleButton.setText("START");
+                    StreamTimerMain.gui.toggleButton.setToolTipText("Starts the timer");
+                }
+            }
+        } else {
+            StreamTimerMain.timer.start();
+            if (StreamTimerMain.gui != null) {
+                if (StreamTimerMain.gui.messageText != null) StreamTimerMain.gui.messageText.setText("Started timer!");
+                if (StreamTimerMain.gui.toggleButton != null) {
+                    StreamTimerMain.gui.toggleButton.setText("STOP");
+                    StreamTimerMain.gui.toggleButton.setToolTipText("Stops the timer");
+                }
+            }
+        }
     }
 }

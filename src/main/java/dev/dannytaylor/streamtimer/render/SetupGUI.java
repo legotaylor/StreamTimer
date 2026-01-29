@@ -15,10 +15,10 @@ public class SetupGUI {
     private JFrame frame;
 
     public SetupGUI() {
-        SwingUtilities.invokeLater(this::init);
+        SwingUtilities.invokeLater(this::create);
     }
     
-    private void init() {
+    private void create() {
         System.out.println("[Stream Timer] Initializing GUI...");
         if (StreamTimerConfig.instance.skipSetupScreen.value()) launch(StreamTimerConfig.instance.previousRenderMode.value());
         else {
@@ -137,7 +137,7 @@ public class SetupGUI {
 
     private void launch(RenderMode renderMode) {
         StreamTimerConfig.instance.previousRenderMode.setValue(renderMode, true);
-        this.frame.setVisible(false);
+        if (this.frame != null) this.frame.setVisible(false);
 
         RenderMode verifiedRenderMode = renderMode;
         if (renderMode.usesGL()) {
@@ -148,6 +148,6 @@ public class SetupGUI {
             }
         }
 
-        StreamTimerMain.gui.init(verifiedRenderMode);
+        StreamTimerMain.gui.create(verifiedRenderMode);
     }
 }

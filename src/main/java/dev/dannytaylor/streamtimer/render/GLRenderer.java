@@ -76,6 +76,7 @@ public class GLRenderer implements GLEventListener {
             gl.glUniform1f(gl.glGetUniformLocation(this.shaderProgram, "uRainbow"), StreamTimerConfig.instance.rainbow.value() ? 0.0F : 1.0F);
             gl.glUniform1f(gl.glGetUniformLocation(this.shaderProgram, "uShouldDim"), StreamTimerConfig.instance.dimWhenStopped.value() ? 1.0F : 0.0F);
             gl.glUniform1f(gl.glGetUniformLocation(this.shaderProgram, "uActive"), StreamTimerMain.timer.isRunning() ? 1.0F : 0.0F);
+            gl.glUniform1f(gl.glGetUniformLocation(this.shaderProgram, "uFinished"), StreamTimerMain.timer.isFinished() ? 1.0F : 0.0F);
             gl.glBindTexture(GL2.GL_TEXTURE_2D, this.texID);
 
             int width = StreamTimerMain.textRenderer.getWidth();

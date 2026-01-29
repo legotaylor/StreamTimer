@@ -2,6 +2,7 @@ package dev.dannytaylor.streamtimer.render;
 
 import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
+import dev.dannytaylor.streamtimer.timer.TimerUtils;
 
 import java.awt.*;
 
@@ -22,7 +23,7 @@ public class Tray {
         });
 
         MenuItem startStop = new MenuItem("Start/Stop");
-        startStop.addActionListener(e -> StreamTimerMain.gui.toggleTimer());
+        startStop.addActionListener(e -> TimerUtils.toggleTimer());
 
         MenuItem exit = new MenuItem("Exit");
         exit.addActionListener(e -> System.exit(0));

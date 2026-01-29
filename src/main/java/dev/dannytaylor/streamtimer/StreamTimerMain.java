@@ -2,13 +2,17 @@ package dev.dannytaylor.streamtimer;
 
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
+import dev.dannytaylor.streamtimer.integration.IntegrationRegistry;
+import dev.dannytaylor.streamtimer.integration.twitch.TwitchIntegration;
 import dev.dannytaylor.streamtimer.render.GUI;
-import dev.dannytaylor.streamtimer.render.Resources;
+import dev.dannytaylor.streamtimer.util.Resources;
 import dev.dannytaylor.streamtimer.render.TextRenderer;
 import dev.dannytaylor.streamtimer.timer.Timer;
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
+import dev.dannytaylor.streamtimer.util.StreamTimerRunnable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 
 public class StreamTimerMain {
     public static boolean running = true;
@@ -22,6 +26,7 @@ public class StreamTimerMain {
             StreamTimerResources.extract();
             icon = Resources.getTexture(StreamTimerMain.class.getResource(StaticVariables.logo), 64, 64);
             StreamTimerConfig.bootstrap();
+            IntegrationRegistry.bootstrap();
             gui.latch.await();
             long nextTick = System.nanoTime();
             while (running) {
@@ -53,5 +58,7 @@ public class StreamTimerMain {
         String time = TimerUtils.getTime();
         StreamTimerMain.textRenderer.render(time);
         gui.updateTimer(time);
+
+        TwitchIntegration.setIdSecretEnabled(!TwitchIntegration.twitch.hasClient());
     }
 }
