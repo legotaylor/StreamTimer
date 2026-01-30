@@ -17,3 +17,6 @@ Download the latest version [here](https://github.com/legotaylor/StreamTimer/rel
 ## Issues
 Please report any issues [here](https://github.com/legotaylor/StreamTimer/issues)
 I would appreciate anyone who can test sub, resub, and gifted subs for the twitch integration.
+
+##  
+**Licenced under LGPLv3**
