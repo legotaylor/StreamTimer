@@ -12,7 +12,7 @@ Download the latest version [here](https://github.com/legotaylor/StreamTimer/rel
 - Download the latest version [here](https://github.com/legotaylor/StreamTimer/releases) and open using Java 11 or later.
 - Use the [...] button to open the configuration dialog.
 - Configure to your liking.
-- Twitch Integration->Connection Tab contains all the information you need to create the Twitch Application, make sure you read carefully.
+- Twitch Integration→Connection Tab contains all the information you need to create the Twitch Application, make sure you read carefully.
 
 ## Issues
 Please report any issues [here](https://github.com/legotaylor/StreamTimer/issues)
