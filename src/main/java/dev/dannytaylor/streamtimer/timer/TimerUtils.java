@@ -29,6 +29,7 @@ public class TimerUtils {
     }
 
     public static void setTimer(long seconds, boolean add, boolean save) {
+        System.out.println("[StreamTimer] Added " + getTime(seconds * 1000L) + " to the timer");
         StreamTimerMain.timer.set(Math.max(0, (add ? getMillis() : 0) + seconds * 1000L), save); // we only save on start/pause/set/add/remove otherwise it is a lot of writes.
     }
 

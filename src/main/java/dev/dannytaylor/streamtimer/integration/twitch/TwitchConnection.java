@@ -154,13 +154,24 @@ public class TwitchConnection {
                 case TIER3: onSub(3, event.getCount(), event.getTier().ordinalName() + " x" + event.getCount() + " Gifted Sub");
             }
         });
+        this.client.getEventManager().onEvent(ExtendSubscriptionEvent.class, event -> {
+            switch (event.getSubPlan()) {
+                case TWITCH_PRIME: onSub(1, 1, event.getSubPlan().ordinalName() + " Resub");
+                case TIER1: onSub(1, 1, event.getSubPlan().ordinalName() + " Resub");
+                case TIER2: onSub(2, 1, event.getSubPlan().ordinalName() + " Resub");
+                case TIER3: onSub(3, 1, event.getSubPlan().ordinalName() + " Resub");
+            }
+        });
         this.client.getEventManager().onEvent(SubscriptionEvent.class, event -> {
-            if (!event.getGifted()) {
+            // Is there a better way to do this?
+            // Does this function as intended?
+            // Why did the event get fired by the total amount gifted ever...
+            if (!event.getGifted() && event.getMonths() == 0 && event.getSubStreak() == 0) {
                 switch (event.getSubPlan()) {
-                    case TWITCH_PRIME: onSub(1, 1, event.getSubPlan() + " Sub");
-                    case TIER1: onSub(1, 1, event.getSubPlan() + " Sub");
-                    case TIER2: onSub(2, 1, event.getSubPlan() + " Sub");
-                    case TIER3: onSub(3, 1, event.getSubPlan() + " Sub");
+                    case TWITCH_PRIME: onSub(1, 1, event.getSubPlan().ordinalName() + " Sub");
+                    case TIER1: onSub(1, 1, event.getSubPlan().ordinalName() + " Sub");
+                    case TIER2: onSub(2, 1, event.getSubPlan().ordinalName() + " Sub");
+                    case TIER3: onSub(3, 1, event.getSubPlan().ordinalName() + " Sub");
                 }
             }
         });
@@ -176,9 +187,10 @@ public class TwitchConnection {
         long secondsToAdd = (long) (value / equValue) * equSeconds;
         if (!StreamTimerMain.timer.isFinished()) {
             TimerUtils.setTimer(secondsToAdd, true, true);
-            String log = "Added " + secondsToAdd + " seconds to the timer via " + type + "! (" + value + ")";
-            StreamTimerMain.gui.messageText.setText(log);
-            System.out.println("[Stream Timer/Twitch Integration] " + log);
+            String message = "Added " + TimerUtils.getTime(secondsToAdd * 1000L) + " to the timer"; // we probably could send this to the twitch chat
+            String extendedMessage = message + " via " + type + "! (" + value + ")";
+            StreamTimerMain.gui.messageText.setText(extendedMessage);
+            System.out.println("[Stream Timer/Twitch Integration] " + extendedMessage);
         } else {
             String log = "Did not add time as timer has finished (" + value + " " + type + ")";
             StreamTimerMain.gui.messageText.setText(log);

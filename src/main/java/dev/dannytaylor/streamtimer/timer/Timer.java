@@ -76,8 +76,8 @@ public class Timer {
 
     public void set(long time, boolean save) {
         this.time = time;
+        System.out.println("[Stream Timer] Set Timer to " + TimerUtils.getTime(time));
         save(save);
-        System.out.println("[Stream Timer] Set Timer");
     }
 
     public long get() {
