@@ -11,6 +11,7 @@ import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
 import com.github.twitch4j.TwitchClient;
 import com.github.twitch4j.TwitchClientBuilder;
 import com.github.twitch4j.chat.events.channel.*;
+import com.github.twitch4j.common.enums.SubscriptionPlan;
 import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.integration.AuthConfig;
@@ -147,32 +148,29 @@ public class TwitchConnection {
 
     private void registerSubs() {
         this.client.getEventManager().onEvent(GiftSubscriptionsEvent.class, event -> {
-            switch (event.getTier()) {
-                case TWITCH_PRIME: onSub(1, event.getCount(), event.getTier().ordinalName() + " x" + event.getCount() + " Gifted Sub");
-                case TIER1: onSub(1, event.getCount(), event.getTier().ordinalName() + " x" + event.getCount() + " Gifted Sub");
-                case TIER2: onSub(2, event.getCount(), event.getTier().ordinalName() + " x" + event.getCount() + " Gifted Sub");
-                case TIER3: onSub(3, event.getCount(), event.getTier().ordinalName() + " x" + event.getCount() + " Gifted Sub");
-            }
+            SubscriptionPlan subPlan = event.getTier();
+            System.out.println("[GiftSubscriptionsEvent] " + subPlan.ordinalName());
+            if (subPlan.equals(SubscriptionPlan.TWITCH_PRIME) || subPlan.equals(SubscriptionPlan.TIER1)) onSub(1, event.getCount(), event.getTier().ordinalName() + " x" + event.getCount() + " Gifted Sub"); // You can't gift prime subs so we don't really have to check
+            else if (subPlan.equals(SubscriptionPlan.TIER2)) onSub(2, event.getCount(), event.getTier().ordinalName() + " x" + event.getCount() + " Gifted Sub");
+            else if (subPlan.equals(SubscriptionPlan.TIER3)) onSub(3, event.getCount(), event.getTier().ordinalName() + " x" + event.getCount() + " Gifted Sub");
         });
         this.client.getEventManager().onEvent(ExtendSubscriptionEvent.class, event -> {
-            switch (event.getSubPlan()) {
-                case TWITCH_PRIME: onSub(1, 1, event.getSubPlan().ordinalName() + " Resub");
-                case TIER1: onSub(1, 1, event.getSubPlan().ordinalName() + " Resub");
-                case TIER2: onSub(2, 1, event.getSubPlan().ordinalName() + " Resub");
-                case TIER3: onSub(3, 1, event.getSubPlan().ordinalName() + " Resub");
-            }
+            SubscriptionPlan subPlan = event.getSubPlan();
+            System.out.println("[ExtendSubscriptionEvent] " + subPlan.ordinalName());
+            if (subPlan.equals(SubscriptionPlan.TWITCH_PRIME) || subPlan.equals(SubscriptionPlan.TIER1)) onSub(1, 1, subPlan.ordinalName() + " Resub");
+            else if (subPlan.equals(SubscriptionPlan.TIER2)) onSub(2, 1, subPlan.ordinalName() + " Resub");
+            else if (subPlan.equals(SubscriptionPlan.TIER3)) onSub(3, 1, subPlan.ordinalName() + " Resub");
         });
         this.client.getEventManager().onEvent(SubscriptionEvent.class, event -> {
             // Is there a better way to do this?
             // Does this function as intended?
             // Why did the event get fired by the total amount gifted ever...
             if (!event.getGifted() && event.getMonths() == 0 && event.getSubStreak() == 0) {
-                switch (event.getSubPlan()) {
-                    case TWITCH_PRIME: onSub(1, 1, event.getSubPlan().ordinalName() + " Sub");
-                    case TIER1: onSub(1, 1, event.getSubPlan().ordinalName() + " Sub");
-                    case TIER2: onSub(2, 1, event.getSubPlan().ordinalName() + " Sub");
-                    case TIER3: onSub(3, 1, event.getSubPlan().ordinalName() + " Sub");
-                }
+                SubscriptionPlan subPlan = event.getSubPlan();
+                System.out.println("[SubscriptionEvent] " + subPlan.ordinalName());
+                if (subPlan.equals(SubscriptionPlan.TWITCH_PRIME) || subPlan.equals(SubscriptionPlan.TIER1)) onSub(1, 1, subPlan.ordinalName() + " Sub");
+                else if (subPlan.equals(SubscriptionPlan.TIER2)) onSub(2, 1, subPlan.ordinalName() + " Sub");
+                else if (subPlan.equals(SubscriptionPlan.TIER3)) onSub(3, 1, subPlan.ordinalName() + " Sub");
             }
         });
     }
