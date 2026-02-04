@@ -42,6 +42,7 @@ public class StreamTimerConfig extends ReflectiveConfig {
     public final TrackedValue<Boolean> rainbow = this.value(false);
     public final TrackedValue<Boolean> dimWhenStopped = this.value(true);
     public final TrackedValue<Boolean> finishSound = this.value(false);
+    public final TrackedValue<Boolean> showMillis = this.value(false);
 
     public final TrackedValue<String> addHours = this.value("01");
     public final TrackedValue<String> addMinutes = this.value("00");

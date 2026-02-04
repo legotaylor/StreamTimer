@@ -185,6 +185,12 @@ public class GUI {
         reversed.setSelected(StreamTimerConfig.instance.reversed.value());
         reversed.addChangeListener(e -> StreamTimerConfig.instance.reversed.setValue(reversed.isSelected(), true));
         optionsRow.add(reversed);
+
+        JCheckBox showMillis = GUIWidgets.createCheckbox("Show Milliseconds");
+        showMillis.setSelected(StreamTimerConfig.instance.showMillis.value());
+        showMillis.addChangeListener(e -> StreamTimerConfig.instance.showMillis.setValue(showMillis.isSelected(), true));
+        optionsRow.add(showMillis);
+
         JCheckBox finishSound = GUIWidgets.createCheckbox("Finish Sound");
         finishSound.setToolTipText("When enabled, a sound will be played after the timer reaches 0.");
         finishSound.setSelected(StreamTimerConfig.instance.finishSound.value());

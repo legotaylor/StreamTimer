@@ -11,17 +11,21 @@ import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 
 public class TimerUtils {
-    public static String getTime(long millis) {
-        long totalSeconds = Math.max(0, millis / 1000);
-        long hours = totalSeconds / 3600;
-        long minutes = (totalSeconds % 3600) / 60;
-        long seconds = totalSeconds % 60;
+    public static String getTime(long millis, boolean showMillis) {
+        long totalMillis = Math.max(0, millis);
+        long hours = totalMillis / 3_600_000;
+        long minutes = (totalMillis % 3_600_000) / 60_000;
+        long seconds = (totalMillis % 60_000) / 1_000;
+        long milliseconds = totalMillis % 1_000;
+        return showMillis ? String.format("%02d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds) : String.format("%02d:%02d:%02d", hours, minutes, seconds);
+    }
 
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+    public static String getTime(long millis) {
+        return getTime(millis, false);
     }
 
     public static String getTime() {
-        return getTime(getMillis());
+        return getTime(getMillis(), StreamTimerConfig.instance.showMillis.value());
     }
 
     public static long getMillis() {
