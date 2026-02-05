@@ -10,6 +10,7 @@ package dev.dannytaylor.streamtimer.integration.twitch;
 import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
 import com.github.twitch4j.TwitchClient;
 import com.github.twitch4j.TwitchClientBuilder;
+import com.github.twitch4j.chat.events.AbstractChannelMessageEvent;
 import com.github.twitch4j.chat.events.channel.*;
 import com.github.twitch4j.common.enums.SubscriptionPlan;
 import dev.dannytaylor.streamtimer.StreamTimerMain;
@@ -95,7 +96,7 @@ public class TwitchConnection {
     }
 
     private void registerCommands() {
-        this.client.getEventManager().onEvent(ChannelMessageEvent.class, event -> {
+        this.client.getEventManager().onEvent(AbstractChannelMessageEvent.class, event -> {
             if (StreamTimerConfig.instance.twitchTimes.commandEnabled.value().containsAny(event.getPermissions())) {
                 String[] message = event.getMessage().split(" ");
                 if (StreamTimerConfig.containsIgnoresCase(StreamTimerConfig.instance.twitchTimes.addCommand.value(), message[0])) {
@@ -182,6 +183,7 @@ public class TwitchConnection {
     }
 
     private void addTime(float value, float equValue, int equSeconds, String type) {
+        System.out.println("[Stream Timer/Twitch Integration] addTime(value=" + value + ", equValue=" + equValue + ", equSeconds=" + equSeconds + ", type=" + type + ");");
         long secondsToAdd = (long) (value / equValue) * equSeconds;
         if (!StreamTimerMain.timer.isFinished()) {
             TimerUtils.setTimer(secondsToAdd, true, true);
