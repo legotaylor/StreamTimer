@@ -8,6 +8,8 @@
 package dev.dannytaylor.streamtimer.integration.twitch;
 
 import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
+import com.github.philippheuer.events4j.core.EventManager;
+import com.github.philippheuer.events4j.simple.SimpleEventHandler;
 import com.github.twitch4j.TwitchClient;
 import com.github.twitch4j.TwitchClientBuilder;
 import com.github.twitch4j.chat.events.AbstractChannelMessageEvent;
@@ -21,6 +23,7 @@ import dev.dannytaylor.streamtimer.timer.TimerUtils;
 public class TwitchConnection {
     private TwitchClient client;
     private String username;
+    private final EventManager eventManager = new EventManager();
 
     public void toggleConnected() {
         if (!this.hasClient()) this.connect();
@@ -45,7 +48,9 @@ public class TwitchConnection {
                     System.err.println("Failed to create twitch auth: " + error);
                 }
                 if (credential != null) {
-                    this.client = TwitchClientBuilder.builder().withEnableChat(true).withChatAccount(credential).build();
+                    this.eventManager.setDefaultEventHandler(SimpleEventHandler.class);
+                    this.eventManager.autoDiscovery();
+                    this.client = TwitchClientBuilder.builder().withEnableChat(true).withChatAccount(credential).withEventManager(this.eventManager).build();
                     this.registerEvents();
                     if (AuthConfig.instance.twitchChannel.value().isEmpty()) {
                         AuthConfig.instance.twitchChannel.setValue(credential.getUserName(), true);
@@ -72,12 +77,16 @@ public class TwitchConnection {
 
     private void join(String channelName) {
         this.client.getChat().joinChannel(channelName);
-        System.out.println("[Stream Timer/Twitch Integration] Joined " + channelName + "!");
+        String message = "Joined " + channelName + "!";
+        if (StreamTimerMain.gui.messageText != null) StreamTimerMain.gui.messageText.setText("[Twitch Integration] " + message);
+        System.out.println("[Stream Timer/Twitch Integration] " + message);
     }
 
     private void leave(String channelName) {
         this.client.getChat().leaveChannel(channelName);
-        System.out.println("[Stream Timer/Twitch Integration] Left " + channelName + "!");
+        String message = "Left " + channelName + "!";
+        if (StreamTimerMain.gui.messageText != null) StreamTimerMain.gui.messageText.setText("[Twitch Integration] " + message);
+        System.out.println("[Stream Timer/Twitch Integration] " + message);
     }
 
     public boolean hasClient() {
@@ -177,9 +186,9 @@ public class TwitchConnection {
     }
 
     private void onSub(int tier, int amount, String name) {
-        if (tier == 1 && StreamTimerConfig.instance.twitchTimes.tierOneEnabled.value()) addTime(amount, 1, StreamTimerConfig.instance.twitchTimes.tierOneSeconds.value(), name + " Sub");
-        else if (tier == 2 && StreamTimerConfig.instance.twitchTimes.tierTwoEnabled.value()) addTime(amount, 1, StreamTimerConfig.instance.twitchTimes.tierTwoSeconds.value(), name + " Sub");
-        else if (tier == 3 && StreamTimerConfig.instance.twitchTimes.tierThreeEnabled.value()) addTime(amount, 1, StreamTimerConfig.instance.twitchTimes.tierThreeSeconds.value(), name + " Sub");
+        if (tier == 1 && StreamTimerConfig.instance.twitchTimes.tierOneEnabled.value()) addTime(amount, 1, StreamTimerConfig.instance.twitchTimes.tierOneSeconds.value(), name);
+        else if (tier == 2 && StreamTimerConfig.instance.twitchTimes.tierTwoEnabled.value()) addTime(amount, 1, StreamTimerConfig.instance.twitchTimes.tierTwoSeconds.value(), name);
+        else if (tier == 3 && StreamTimerConfig.instance.twitchTimes.tierThreeEnabled.value()) addTime(amount, 1, StreamTimerConfig.instance.twitchTimes.tierThreeSeconds.value(), name);
     }
 
     private void addTime(float value, float equValue, int equSeconds, String type) {
