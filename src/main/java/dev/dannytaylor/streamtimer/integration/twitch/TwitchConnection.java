@@ -20,9 +20,12 @@ import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.integration.AuthConfig;
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class TwitchConnection {
     private TwitchClient client;
-    private String username;
+    private final List<String> usernames = new ArrayList<>();
     private final EventManager eventManager = new EventManager();
 
     public void toggleConnected() {
@@ -52,11 +55,17 @@ public class TwitchConnection {
                     this.eventManager.autoDiscovery();
                     this.client = TwitchClientBuilder.builder().withEnableChat(true).withChatAccount(credential).withEventManager(this.eventManager).build();
                     this.registerEvents();
-                    if (AuthConfig.instance.twitchChannel.value().isEmpty()) {
-                        AuthConfig.instance.twitchChannel.setValue(credential.getUserName(), true);
+                    if (AuthConfig.instance.twitchChannels.value().getFirst().isBlank()) {
+                        AuthConfig.instance.twitchChannels.value().set(0, credential.getUserName());
+                        AuthConfig.instance.save();
                         TwitchIntegration.channel.setText(credential.getUserName());
                     }
-                    this.join(this.username = AuthConfig.instance.twitchChannel.value()); // This could be changed in future to allow for configurable channels (e.g. multi-stream subbathons, connected via chatbot/mod account, etc.)
+                    for (String username : AuthConfig.instance.twitchChannels.value()) {
+                        if (!username.isBlank()) {
+                            this.usernames.add(username);
+                            this.join(username); // This could be changed in future to allow for configurable channels (e.g. multi-stream subathons, connected via chatbot/mod account, etc.)
+                        }
+                    }
                 }
             }
             this.setButtons();
@@ -66,7 +75,9 @@ public class TwitchConnection {
     public void disconnect() {
         new Thread(() -> {
             if (this.hasClient()) {
-                if (this.isConnected()) this.leave(this.username);
+                for (String username : this.usernames) {
+                    if (this.isConnected(username)) this.leave(username);
+                }
                 System.out.println("[Stream Timer/Twitch Integration] Removing Client...");
                 this.client.close();
                 this.client = null;
@@ -93,8 +104,8 @@ public class TwitchConnection {
         return this.client != null;
     }
 
-    public boolean isConnected() {
-        return this.hasClient() && this.client.getChat().isChannelJoined(this.username);
+    public boolean isConnected(String username) {
+        return this.hasClient() && this.client.getChat().isChannelJoined(username);
     }
 
     private void registerEvents() {

@@ -8,6 +8,7 @@
 package dev.dannytaylor.streamtimer.render;
 
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
+import dev.dannytaylor.streamtimer.integration.websocket.WebSocketIntegration;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -44,6 +45,8 @@ public class TextRenderer {
 
         graphics.drawString(timeText, x, y);
         graphics.dispose();
+
+        sendFrameToWebSocket(imageToByteArray(this.framebuffer));
     }
 
     public void updateByteBuffer(ByteBuffer buffer) {
@@ -76,5 +79,25 @@ public class TextRenderer {
 
     public ByteBuffer createByteBuffer() {
         return ByteBuffer.allocateDirect(4 * this.width * this.height);
+    }
+
+    public static byte[] imageToByteArray(BufferedImage image) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        int[] pixels = new int[width * height];
+        image.getRGB(0, 0, width, height, pixels, 0, width);
+
+        ByteBuffer byteBuffer = ByteBuffer.allocate(width * height * 4);
+        for (int pixel : pixels) {
+            byteBuffer.put((byte) ((pixel >> 16) & 0xFF)); // Red
+            byteBuffer.put((byte) ((pixel >> 8) & 0xFF));  // Green
+            byteBuffer.put((byte) (pixel & 0xFF));  // Blue
+            byteBuffer.put((byte) ((pixel >> 24) & 0xFF)); // Alpha
+        }
+        return byteBuffer.array();
+    }
+
+    private static void sendFrameToWebSocket(byte[] frame) {
+        if (WebSocketIntegration.isConnected()) WebSocketIntegration.sendFrame(frame);
     }
 }

@@ -307,7 +307,7 @@ public class TwitchIntegration {
         channelLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         tab.add(channelLabel, gbc);
         gbc.gridx = 2;
-        channel = new JTextField(AuthConfig.instance.twitchChannel.value());
+        channel = new JTextField(AuthConfig.instance.twitchChannels.value().getFirst());
         channel.setEnabled(TwitchIntegration.twitch.hasClient());
         channel.setToolTipText("If left blank, auto fills with application username.");
         tab.add(channel, gbc);
@@ -375,9 +375,9 @@ public class TwitchIntegration {
         } catch (Exception error) {
             System.err.println("Failed to encrypt secret: " + error);
         }
+        AuthConfig.instance.twitchChannels.value().set(0, channel.getText());
         AuthConfig.instance.twitchId.setValue(clientId.getText(), true);
         AuthConfig.instance.twitchSecret.setValue(secret, true);
-        AuthConfig.instance.twitchChannel.setValue(channel.getText(), true);
     }
 
     public static void setIdSecretEnabled(boolean value) {

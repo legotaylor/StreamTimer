@@ -14,6 +14,7 @@ import org.quiltmc.config.api.ReflectiveConfig;
 import org.quiltmc.config.api.annotations.Comment;
 import org.quiltmc.config.api.serializers.TomlSerializer;
 import org.quiltmc.config.api.values.TrackedValue;
+import org.quiltmc.config.api.values.ValueList;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -38,7 +39,7 @@ public class AuthConfig extends ReflectiveConfig {
     @Comment("DO NOT SHARE THIS FILE WITH ANYONE!")
     public final TrackedValue<String> twitchId = this.value("PUT YOUR CLIENT ID HERE");
     public final TrackedValue<String> twitchSecret = this.value("PUT YOUR CLIENT SECRET HERE");
-    public final TrackedValue<String> twitchChannel = this.value("");
+    public final TrackedValue<ValueList<String>> twitchChannels = this.list("", "");
     public final TrackedValue<Integer> twitchPort = this.value(34250);
     public final TrackedValue<Integer> twitchTimeout = this.value(60000); // This gives users one minute before auth times out.
     public final TrackedValue<Boolean> twitchAutoConnect = this.value(false);
