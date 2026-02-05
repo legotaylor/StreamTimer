@@ -7,6 +7,7 @@
 
 package dev.dannytaylor.streamtimer.render;
 
+import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.integration.websocket.WebSocketIntegration;
 
@@ -46,7 +47,9 @@ public class TextRenderer {
         graphics.drawString(timeText, x, y);
         graphics.dispose();
 
-        sendFrameToWebSocket(imageToByteArray(this.framebuffer));
+        if (!StreamTimerConfig.instance.previousRenderMode.value().usesGL()) { // whilst it says previous, it's the current render mode, it was mainly for setup gui before now.
+            sendFrameToWebSocket(imageToByteArray(this.framebuffer));
+        }
     }
 
     public void updateByteBuffer(ByteBuffer buffer) {
