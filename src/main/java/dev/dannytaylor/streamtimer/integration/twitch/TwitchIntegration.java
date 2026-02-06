@@ -32,6 +32,7 @@ public class TwitchIntegration {
 
     private static JTextField clientId;
     private static JTextField clientSecret;
+    private static JTextField channel;
 
     public static void bootstrap() {
         String name = "Twitch Integration";
@@ -346,6 +347,19 @@ public class TwitchIntegration {
         clientSecret.setToolTipText(doNotShareSecretMessage);
         tab.add(clientSecret, gbc);
 
+        // Channel
+        gbc.gridy = row++;
+        gbc.gridx = 1;
+        JLabel channelLabel = new JLabel("Twitch Channel:");
+        channelLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        tab.add(channelLabel, gbc);
+        gbc.gridx = 2;
+        String twitchChannel = AuthConfig.instance.twitchChannel.value(); // This will be removed in the future and replaced with a button.
+        channel = new JTextField(twitchChannel);
+        channel.setEnabled(TwitchIntegration.twitch.hasClient());
+        channel.setToolTipText("If left blank, auto fills with application username.");
+        tab.add(channel, gbc);
+
         // Client ID/Secret Info
         gbc.gridy = row++;
         gbc.gridx = 1;
@@ -411,10 +425,12 @@ public class TwitchIntegration {
         }
         AuthConfig.instance.twitchId.setValue(clientId.getText(), true);
         AuthConfig.instance.twitchSecret.setValue(secret, true);
+        AuthConfig.instance.twitchChannel.setValue(channel.getText(), true);
     }
 
     public static void setIdSecretEnabled(boolean value) {
         if (clientId != null) clientId.setEnabled(value);
         if (clientSecret != null) clientSecret.setEnabled(value);
+        if (channel != null) channel.setEnabled(value);
     }
 }

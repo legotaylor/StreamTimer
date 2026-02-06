@@ -56,15 +56,13 @@ public class TwitchConnection {
                     this.eventManager.autoDiscovery();
                     this.client = TwitchClientBuilder.builder().withEnableChat(true).withChatAccount(credential).withEventManager(this.eventManager).build();
                     this.registerEvents();
-                    if (AuthConfig.instance.twitchChannels.value().getFirst().isBlank()) {
-                        AuthConfig.instance.twitchChannels.value().set(0, credential.getUserName());
+                    if (AuthConfig.instance.twitchChannel.value().isBlank()) {
+                        AuthConfig.instance.twitchChannel.setValue(credential.getUserName(), false);
                         AuthConfig.toFile();
                     }
-                    for (String username : AuthConfig.instance.twitchChannels.value()) {
-                        if (!username.isBlank()) {
-                            this.usernames.add(username);
-                            this.join(username); // This could be changed in future to allow for configurable channels (e.g. multi-stream subathons, connected via chatbot/mod account, etc.)
-                        }
+                    if (!AuthConfig.instance.twitchChannel.value().isBlank()) {
+                        this.usernames.add(AuthConfig.instance.twitchChannel.value());
+                        for (String username : this.usernames) this.join(username);
                     }
                 }
             }
