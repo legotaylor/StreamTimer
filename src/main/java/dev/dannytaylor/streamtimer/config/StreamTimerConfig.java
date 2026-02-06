@@ -84,6 +84,8 @@ public class StreamTimerConfig extends ReflectiveConfig {
         public final TrackedValue<Float> multiplier = this.value(1.0F);
     }
 
+    public final TrackedValue<WindowTheme> theme = this.value(WindowTheme.FLAT_AUTO);
+
     public final TrackedValue<Boolean> debug = this.value(false);
 
     public static void reload() {

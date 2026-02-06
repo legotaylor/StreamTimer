@@ -62,6 +62,26 @@ public class GUIWidgets {
         return createText(text, 0);
     }
 
+    public static JRadioButton createRadioButton() {
+        return (JRadioButton) setHandCursor(new JRadioButton());
+    }
+
+    public static JRadioButton createRadioButton(Icon icon) {
+        return (JRadioButton) setHandCursor(new JRadioButton(icon));
+    }
+
+    public static JRadioButton createRadioButton(String text) {
+        return (JRadioButton) setHandCursor(new JRadioButton(text));
+    }
+
+    public static JRadioButton createRadioButton(Action action) {
+        return (JRadioButton) setHandCursor(new JRadioButton(action));
+    }
+
+    public static JRadioButton createRadioButton(String text, Icon icon) {
+        return (JRadioButton) setHandCursor(new JRadioButton(text, icon));
+    }
+
     private static JComponent setHandCursor(JComponent component) {
         component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return component;

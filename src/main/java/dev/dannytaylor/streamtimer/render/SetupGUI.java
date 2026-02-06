@@ -20,7 +20,7 @@ import java.awt.event.WindowListener;
 import java.nio.file.Path;
 
 public class SetupGUI {
-    private JFrame frame;
+    public JFrame window;
 
     public SetupGUI() {
         SwingUtilities.invokeLater(this::create);
@@ -30,84 +30,95 @@ public class SetupGUI {
         StreamTimerLoggerImpl.info("Initializing GUI...");
         if (StreamTimerConfig.instance.skipSetupScreen.value()) launch(StreamTimerConfig.instance.previousRenderMode.value());
         else {
+            RenderMode previousRenderType = StreamTimerConfig.instance.previousRenderMode.value();
             StreamTimerLoggerImpl.info("Launching Setup GUI...");
-            this.frame = new JFrame(StaticVariables.name + ": Setup");
-            Dimension size = new Dimension(576, 200);
+            this.window = new JFrame(StaticVariables.name + ": Setup");
+            this.window.setLayout(new BorderLayout());
+
             JPanel textPanel = new JPanel();
-            textPanel.setLayout(new BorderLayout());
+            textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+            textPanel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
             JLabel title = new JLabel("How would you like to open " + StaticVariables.name + "?");
-            title.setFont(title.getFont().deriveFont(Font.BOLD, 24));
+            title.setFont(title.getFont().deriveFont(Font.BOLD, 24.0F));
             GUI.setCentered(title);
 
-            JLabel description = new JLabel("You can hover over the buttons to see a description.");
-            description.setFont(title.getFont().deriveFont(Font.PLAIN, 12));
+            JLabel description = new JLabel("You can hover your mouse over the options to see a description.");
+            description.setFont(title.getFont().deriveFont(Font.PLAIN, 12.0F));
             GUI.setCentered(description);
 
-            textPanel.add(title, BorderLayout.NORTH);
-            textPanel.add(description, BorderLayout.SOUTH);
+            textPanel.add(title);
+            textPanel.add(Box.createVerticalStrut(4));
+            textPanel.add(description);
+
+            JPanel renderModePanel = new JPanel();
+            renderModePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 24, 0));
+
+            JRadioButton dialogButton = GUIWidgets.createRadioButton("Dialog");
+            dialogButton.setToolTipText("Runs as a dialog.");
+            GUI.setCentered(dialogButton);
+            dialogButton.setSelected(previousRenderType.getRenderType().equals(RenderMode.RenderType.DIALOG));
+
+            JRadioButton frameButton = GUIWidgets.createRadioButton("Window");
+            frameButton.setToolTipText("Runs in a window.");
+            GUI.setCentered(frameButton);
+            frameButton.setSelected(!dialogButton.isSelected() && previousRenderType.getRenderType().equals(RenderMode.RenderType.FRAME));
+
+            ButtonGroup renderMode = new ButtonGroup();
+            renderMode.add(dialogButton);
+            renderMode.add(frameButton);
+            renderModePanel.add(dialogButton);
+            renderModePanel.add(frameButton);
 
             JPanel buttonsPanel = new JPanel();
-            buttonsPanel.setLayout(new BorderLayout());
+            buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
+            buttonsPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
-            JPanel glButtonsPanel = new JPanel();
-            glButtonsPanel.setLayout(new BorderLayout());
+            JCheckBox legacyMode = GUIWidgets.createCheckbox("Use Legacy Renderer", !previousRenderType.usesGL());
+            legacyMode.setToolTipText("Opens using the legacy rendering system. Features requiring OpenGL will not be available!\nHowever you can minimize when opened as a Window whilst using WebSocket!");
+            GUI.setCentered(legacyMode);
 
-            JButton frameModeGL = GUIWidgets.createButton("Window");
-            frameModeGL.setToolTipText("Runs in a window. This won't always prevent minimizing, and you'll see the icon in your taskbar.");
+            JButton launchButton = GUIWidgets.createButton("Launch!");
+            launchButton.setToolTipText("Opens " + StaticVariables.name + " using the selected settings!");
+            GUI.setCentered(launchButton);
 
-            JButton dialogModeGL = GUIWidgets.createButton("Dialog");
-            dialogModeGL.setToolTipText("Runs as a dialog. This prevents minimising, however you will have use the tray icon to bring the window to the front.");
-
-            JCheckBox legacyMode = GUIWidgets.createCheckbox("Use Legacy Renderer");
-            legacyMode.setToolTipText("Opens using the legacy rendering system. Features requiring OpenGL will not be available!");
-
-            frameModeGL.addActionListener(l -> {
-                frameModeGL.setEnabled(false);
-                dialogModeGL.setEnabled(false);
-                launch(legacyMode.isSelected() ? RenderMode.TEXT_FRAME : RenderMode.GL_FRAME);
-            });
-
-            dialogModeGL.addActionListener(l -> {
-                frameModeGL.setEnabled(false);
-                dialogModeGL.setEnabled(false);
-                launch(legacyMode.isSelected() ? RenderMode.TEXT_DIALOG : RenderMode.GL_DIALOG);
-            });
-
-            JPanel legacyModePanel = new JPanel();
-            legacyModePanel.add(legacyMode);
-            GUI.setCentered(legacyModePanel);
-
-            JPanel dontShowAgainPanel = new JPanel();
             JCheckBox dontShowAgain = GUIWidgets.createCheckbox("Don't show this screen again!");
-            dontShowAgain.setToolTipText("If enabled, this screen will be skipped and the render mode will be remembered for future start ups.");
+            dontShowAgain.setToolTipText("If enabled, this screen will be skipped on future start ups.");
+            GUI.setCentered(dontShowAgain);
             dontShowAgain.addChangeListener(l -> StreamTimerConfig.instance.skipSetupScreen.setValue(dontShowAgain.isSelected(), true));
-            dontShowAgainPanel.add(dontShowAgain);
-            GUI.setCentered(dontShowAgainPanel);
 
-            glButtonsPanel.add(dialogModeGL, BorderLayout.NORTH);
-            glButtonsPanel.add(frameModeGL, BorderLayout.SOUTH);
+            launchButton.addActionListener(l -> {
+                launchButton.setEnabled(false);
+                if (dialogButton.isSelected() || frameButton.isSelected()) {
+                    frameButton.setEnabled(false);
+                    dialogButton.setEnabled(false);
+                    if (dialogButton.isSelected()) {
+                        launch(legacyMode.isSelected() ? RenderMode.TEXT_DIALOG : RenderMode.GL_DIALOG);
+                    } else if (frameButton.isSelected()) {
+                        launch(legacyMode.isSelected() ? RenderMode.TEXT_FRAME : RenderMode.GL_FRAME);
+                    }
+                }
+            });
 
-            buttonsPanel.add(glButtonsPanel, BorderLayout.NORTH);
-            buttonsPanel.add(legacyModePanel, BorderLayout.CENTER);
-            buttonsPanel.add(dontShowAgainPanel, BorderLayout.SOUTH);
+            buttonsPanel.add(legacyMode);
+            buttonsPanel.add(Box.createVerticalStrut(8));
+            buttonsPanel.add(launchButton);
+            buttonsPanel.add(Box.createVerticalStrut(12));
+            buttonsPanel.add(dontShowAgain);
 
-            this.frame.add(textPanel, BorderLayout.NORTH);
-            this.frame.add(buttonsPanel, BorderLayout.SOUTH);
+            this.window.add(textPanel, BorderLayout.NORTH);
+            this.window.add(renderModePanel, BorderLayout.CENTER);
+            this.window.add(buttonsPanel, BorderLayout.SOUTH);
 
-            this.frame.pack();
-            this.frame.setMinimumSize(size);
-            this.frame.setSize(size.width, size.height);
-            this.frame.setResizable(false);
+            this.window.pack();
+            this.window.setResizable(false);
+            this.window.setLocationRelativeTo(null);
+            if (StreamTimerMain.icon != null) this.window.setIconImage(StreamTimerMain.icon.getImage());
+            this.window.setVisible(true);
 
-            this.frame.setLocationRelativeTo(null);
-            if (StreamTimerMain.icon != null) this.frame.setIconImage(StreamTimerMain.icon.getImage());
-            this.frame.setVisible(true);
-
-            this.frame.addWindowListener(new WindowListener() {
+            this.window.addWindowListener(new WindowListener() {
                 @Override
                 public void windowOpened(WindowEvent e) {
-
                 }
 
                 @Override
@@ -122,22 +133,18 @@ public class SetupGUI {
 
                 @Override
                 public void windowIconified(WindowEvent e) {
-
                 }
 
                 @Override
                 public void windowDeiconified(WindowEvent e) {
-
                 }
 
                 @Override
                 public void windowActivated(WindowEvent e) {
-
                 }
 
                 @Override
                 public void windowDeactivated(WindowEvent e) {
-
                 }
             });
         }
@@ -145,7 +152,7 @@ public class SetupGUI {
 
     private void launch(RenderMode renderMode) {
         StreamTimerConfig.instance.previousRenderMode.setValue(renderMode, true);
-        if (this.frame != null) this.frame.setVisible(false);
+        if (this.window != null) this.window.setVisible(false);
 
         RenderMode verifiedRenderMode = renderMode;
         if (renderMode.usesGL()) {

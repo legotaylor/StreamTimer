@@ -133,7 +133,7 @@ public class WebSocketIntegration {
                 updateUrl(false);
             }
         });
-        portField.setEditable(WebSocketIntegration.isConnected());
+        portField.setEditable(!WebSocketIntegration.isConnected());
         tab.add(portField, gbc);
 
         // Auto Connect
@@ -208,6 +208,7 @@ public class WebSocketIntegration {
         if (connection != null) {
             try {
                 connection.stop();
+                StreamTimerLoggerImpl.info("[WebSocket Integration] Closed server!");
             } catch (Exception error) {
                 StreamTimerLoggerImpl.error("[WebSocket Integration] Failed to stop server: " + error);
             }

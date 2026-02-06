@@ -7,12 +7,13 @@
 
 package dev.dannytaylor.streamtimer.render;
 
-import com.formdev.flatlaf.FlatDarculaLaf;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLProfile;
+import com.jthemedetecor.OsThemeDetector;
 import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.RenderMode;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
+import dev.dannytaylor.streamtimer.config.WindowTheme;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
 import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
@@ -20,6 +21,7 @@ import dev.dannytaylor.streamtimer.util.IntegerFilter;
 import dev.dannytaylor.streamtimer.util.StreamTimerRunnable;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.text.AbstractDocument;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -34,12 +36,14 @@ import java.util.concurrent.CountDownLatch;
 
 public class GUI {
     public Window window;
+    public JDialog configWindow;
     public JPanel timer;
     public JLabel messageText;
     public String initMessageText = "⠀";
     public JButton toggleButton;
     public JButton configureButton;
     public JTabbedPane configureTabs;
+    public boolean isDark;
 
     public CountDownLatch latch = new CountDownLatch(1);
 
@@ -65,7 +69,17 @@ public class GUI {
     }
 
     public void setup() {
-        setTheme(this.window);
+        updateTheme(this.window, OsThemeDetector.getDetector().isDark());
+        OsThemeDetector.getDetector().registerListener(this::updateThemes);
+    }
+
+    public void updateThemes(boolean isDark) {
+        SwingUtilities.invokeLater(() -> {
+            if (this.setupGUI != null && this.setupGUI.window != null) updateTheme(this.setupGUI.window, isDark);
+            if (this.window != null) updateTheme(this.window, isDark);
+            if (this.configWindow != null) updateTheme(this.configWindow, isDark);
+            this.isDark = isDark;
+        });
     }
 
     public void create(RenderMode renderMode) {
@@ -101,35 +115,36 @@ public class GUI {
         this.configureButton.setPreferredSize(new Dimension(26, 26));
         this.configureButton.setToolTipText("Configure");
 
-        JDialog configureDialog = new JDialog(this.window);
-        configureDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        configureDialog.setTitle(StaticVariables.name + ": Configure");
+        configWindow = new JDialog(this.window);
+        configWindow.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        configWindow.setTitle(StaticVariables.name + ": Configure");
 
-        if (StreamTimerMain.icon != null) configureDialog.setIconImage(StreamTimerMain.icon.getImage());
+        if (StreamTimerMain.icon != null) configWindow.setIconImage(StreamTimerMain.icon.getImage());
 
         this.configureTabs = new JTabbedPane();
 
         ArrayList<StreamTimerRunnable> onBeforeVisible = new ArrayList<>();
         ArrayList<StreamTimerRunnable> onConfigClose = new ArrayList<>();
 
-        onBeforeVisible.add((mode) -> StreamTimerMain.gui.createFontConfigTab(mode));
-        onBeforeVisible.add((mode) -> StreamTimerMain.gui.createTextColorConfigTab(mode));
-        onBeforeVisible.add((mode) -> StreamTimerMain.gui.createBackgroundColorConfigTab(mode));
+        onBeforeVisible.add((mode) -> StreamTimerMain.gui.createFontTab(mode));
+        onBeforeVisible.add((mode) -> StreamTimerMain.gui.createTextColorTab(mode));
+        onBeforeVisible.add((mode) -> StreamTimerMain.gui.createBackgroundColorTab(mode));
 
         onBeforeVisible.addAll(runBeforeVisible);
 
+        onBeforeVisible.add((mode) -> StreamTimerMain.gui.createMiscTab(mode));
         onBeforeVisible.add((mode) -> StreamTimerMain.gui.createLogTab(mode));
         onBeforeVisible.add((mode) -> StreamTimerMain.gui.createLicenseTab(mode));
 
-        onConfigClose.add((mode) -> StreamTimerMain.gui.onTextColorConfigClose(mode));
-        onConfigClose.add((mode) -> StreamTimerMain.gui.onBackgroundColorConfigClose(mode));
+        onConfigClose.add((mode) -> StreamTimerMain.gui.onTextColorTabClose(mode));
+        onConfigClose.add((mode) -> StreamTimerMain.gui.onBackgroundColorTabClose(mode));
         onConfigClose.addAll(GUI.runOnConfigClose);
 
-        configureDialog.add(this.configureTabs);
-        configureDialog.setResizable(false);
-        configureDialog.pack();
-        configureDialog.setMinimumSize(new Dimension(700, 500));
-        configureDialog.addWindowListener(new WindowAdapter() {
+        configWindow.add(this.configureTabs);
+        configWindow.setResizable(false);
+        configWindow.pack();
+        configWindow.setMinimumSize(new Dimension(700, 500));
+        configWindow.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 for (StreamTimerRunnable runnable : onConfigClose) {
@@ -144,8 +159,8 @@ public class GUI {
         });
         this.configureButton.addActionListener(e -> {
             this.configureButton.setEnabled(false);
-            configureDialog.setLocationRelativeTo(this.window);
-            configureDialog.setVisible(true);
+            configWindow.setLocationRelativeTo(this.window);
+            configWindow.setVisible(true);
         });
         configureRow.add(configureButton);
         this.window.add(configureRow, gbc);
@@ -289,12 +304,12 @@ public class GUI {
         this.latch.countDown();
     }
 
-    private void setTheme(Window frame) {
+    private void updateTheme(Window frame, boolean isDark) {
         try {
-            UIManager.setLookAndFeel(new FlatDarculaLaf());
+            UIManager.setLookAndFeel(StreamTimerConfig.instance.theme.value().getTheme(isDark));
             if (frame != null) SwingUtilities.updateComponentTreeUI(frame);
         } catch (Exception error) {
-            StreamTimerLoggerImpl.error("Failed to set theme: " + error);
+            StreamTimerLoggerImpl.error("Failed to update theme: " + error);
         }
     }
 
@@ -321,7 +336,7 @@ public class GUI {
     private JColorChooser textColorChooser;
     private JColorChooser backgroundColorChooser;
 
-    private void createFontConfigTab(RenderMode renderMode) {
+    private void createFontTab(RenderMode renderMode) {
         JPanel tab = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(8, 8, 8, 8);
@@ -352,7 +367,7 @@ public class GUI {
         sizeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         tab.add(sizeLabel, gbc);
         gbc.gridx = 1;
-        JSpinner sizeSpinner = new JSpinner(new SpinnerNumberModel(StreamTimerConfig.instance.size.value().intValue(), 8, 200, 1));
+        JSpinner sizeSpinner = new JSpinner(new SpinnerNumberModel(StreamTimerConfig.instance.size.value().intValue(), 1, 256, 1));
         tab.add(sizeSpinner, gbc);
 
         fontCombo.addActionListener(f -> StreamTimerConfig.instance.font.setValue((String) fontCombo.getSelectedItem(), true));
@@ -361,7 +376,7 @@ public class GUI {
         this.configureTabs.addTab("Font", tab);
     }
 
-    private void createTextColorConfigTab(RenderMode renderMode) {
+    private void createTextColorTab(RenderMode renderMode) {
         JPanel textColorTab = new JPanel();
         textColorTab.setLayout(new BoxLayout(textColorTab, BoxLayout.Y_AXIS));
         textColorTab.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
@@ -391,11 +406,11 @@ public class GUI {
         this.configureTabs.addTab("Text Colour", textColorTab);
     }
 
-    private void onTextColorConfigClose(RenderMode renderMode) {
+    private void onTextColorTabClose(RenderMode renderMode) {
         StreamTimerConfig.instance.textColor.setValue(this.textColorChooser.getColor().getRGB(), true);
     }
 
-    private void createBackgroundColorConfigTab(RenderMode renderMode) {
+    private void createBackgroundColorTab(RenderMode renderMode) {
         JPanel backgroundColorTab = new JPanel();
         backgroundColorTab.setLayout(new BoxLayout(backgroundColorTab, BoxLayout.Y_AXIS));
         backgroundColorTab.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
@@ -417,7 +432,7 @@ public class GUI {
         this.configureTabs.addTab("Background Colour", backgroundColorTab);
     }
 
-    private void onBackgroundColorConfigClose(RenderMode renderMode) {
+    private void onBackgroundColorTabClose(RenderMode renderMode) {
         StreamTimerConfig.instance.backgroundColor.setValue(this.backgroundColorChooser.getColor().getRGB(), true);
     }
 
@@ -455,5 +470,29 @@ public class GUI {
         licence.setCaretPosition(0);
         licenceTab.add(new JScrollPane(licence), BorderLayout.CENTER);
         this.configureTabs.addTab("Licence", licenceTab);
+    }
+
+    private void createMiscTab(RenderMode renderMode) {
+        JPanel tab = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        JLabel themeLabel = new JLabel("Window Theme:");
+        themeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        tab.add(themeLabel, gbc);
+        gbc.gridx = 1;
+        JComboBox<String> themeCombo = new JComboBox<>(WindowTheme.getAllNames());
+        themeCombo.setSelectedItem(StreamTimerConfig.instance.theme.value().getName());
+        tab.add(themeCombo, gbc);
+
+        themeCombo.addActionListener(f -> {
+            StreamTimerConfig.instance.theme.setValue(WindowTheme.values()[themeCombo.getSelectedIndex()], true);
+            updateThemes(OsThemeDetector.getDetector().isDark());
+        });
+        this.configureTabs.addTab("Misc", tab);
     }
 }
