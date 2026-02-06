@@ -283,6 +283,7 @@ public class GUI {
             }
         }
 
+        StreamTimerLoggerImpl.info("Ready!");
         this.window.setVisible(true);
         StreamTimerMain.canStart = true;
         this.latch.countDown();
