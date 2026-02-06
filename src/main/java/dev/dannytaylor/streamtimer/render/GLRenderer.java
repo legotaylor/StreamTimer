@@ -14,6 +14,7 @@ import com.jogamp.opengl.GLEventListener;
 import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.integration.websocket.WebSocketIntegration;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 
 import java.awt.*;
 import java.nio.ByteBuffer;
@@ -36,7 +37,7 @@ public class GLRenderer implements GLEventListener {
             this.shaderProgram = shaderRegistry.linkProgram(gl);
             this.startTime = System.currentTimeMillis();
         } catch (Exception error) {
-            System.err.println("Failed to register glsl shaders: "+ error);
+            StreamTimerLoggerImpl.error("Failed to register glsl shaders: "+ error);
         }
 
         int[] ids = new int[1];

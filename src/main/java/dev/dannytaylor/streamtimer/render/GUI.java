@@ -14,19 +14,19 @@ import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.RenderMode;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
+import dev.dannytaylor.streamtimer.logger.handler.UIHandler;
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
 import dev.dannytaylor.streamtimer.util.IntegerFilter;
 import dev.dannytaylor.streamtimer.util.StreamTimerRunnable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.AbstractDocument;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -107,6 +107,7 @@ public class GUI {
         onBeforeVisible.add((mode) -> StreamTimerMain.gui.createTextColorConfigTab(mode));
         onBeforeVisible.add((mode) -> StreamTimerMain.gui.createBackgroundColorConfigTab(mode));
         onBeforeVisible.addAll(GUI.runBeforeVisible);
+        onBeforeVisible.add((mode) -> StreamTimerMain.gui.createLogTab(mode));
         onBeforeVisible.add((mode) -> StreamTimerMain.gui.createLicenseTab(mode));
 
         onConfigClose.add((mode) -> StreamTimerMain.gui.onTextColorConfigClose(mode));
@@ -145,20 +146,23 @@ public class GUI {
         JButton addButton = GUIWidgets.createButton("+");
         addButton.setToolTipText("Add time");
         addButton.addActionListener(e -> {
-            updateTimer(TimerUtils.getSecondsFromString(hours.getText(), minutes.getText(), seconds.getText()), true, true);
-            messageText.setText("Added time to timer!");
+            long s = TimerUtils.getSecondsFromString(hours.getText(), minutes.getText(), seconds.getText());
+            updateTimer(s, true, true);
+            messageText.setText("Added " + TimerUtils.getTime(s * 1000L) + " to the timer");
         });
         JButton removeButton = GUIWidgets.createButton("-");
         removeButton.setToolTipText("Subtract time");
         removeButton.addActionListener(e -> {
-            updateTimer(-TimerUtils.getSecondsFromString(hours.getText(), minutes.getText(), seconds.getText()), true, true);
-            messageText.setText("Subtracted time from timer!");
+            long s = -TimerUtils.getSecondsFromString(hours.getText(), minutes.getText(), seconds.getText());
+            updateTimer(s, true, true);
+            messageText.setText("Subtracted " + TimerUtils.getTime(s * 1000L) + " to the timer");
         });
         JButton setButton = GUIWidgets.createButton("=");
         setButton.setToolTipText("Set time");
         setButton.addActionListener(e -> {
-            updateTimer(TimerUtils.getSecondsFromString(hours.getText(), minutes.getText(), seconds.getText()), false, true);
-            messageText.setText("Set timer!");
+            long s = TimerUtils.getSecondsFromString(hours.getText(), minutes.getText(), seconds.getText());
+            updateTimer(s, false, true);
+            messageText.setText("Set timer to " + TimerUtils.getTime(s * 1000L));
         });
         timerRow.add(hours);
         timerRow.add(new JLabel(":"));
@@ -264,7 +268,7 @@ public class GUI {
             UIManager.setLookAndFeel(new FlatDarculaLaf());
             if (frame != null) SwingUtilities.updateComponentTreeUI(frame);
         } catch (Exception error) {
-            System.err.println("Failed to set theme: " + error);
+            StreamTimerLoggerImpl.error("Failed to set theme: " + error);
         }
     }
 
@@ -391,6 +395,19 @@ public class GUI {
         StreamTimerConfig.instance.backgroundColor.setValue(this.backgroundColorChooser.getColor().getRGB(), true);
     }
 
+    private void createLogTab(RenderMode renderMode) {
+        JPanel logTab = new JPanel();
+        logTab.setLayout(new BorderLayout());
+        JTextPane log = new JTextPane();
+        log.setEditable(false);
+        log.setPreferredSize(null);
+        JScrollPane pane = new JScrollPane(log);
+        pane.setPreferredSize(null);
+        StreamTimerLoggerImpl.getUiHandler().add(log);
+        logTab.add(pane, BorderLayout.CENTER);
+        this.configureTabs.addTab("Log", logTab);
+    }
+
     private void createLicenseTab(RenderMode renderMode) {
         JPanel licenceTab = new JPanel();
         licenceTab.setLayout(new BorderLayout());
@@ -404,7 +421,7 @@ public class GUI {
                 html.append("</pre></body></html>");
             }
         } catch (Exception error) {
-            System.err.println("Failed to load licence tab: " + error);
+            StreamTimerLoggerImpl.error("Failed to load licence tab: " + error);
             html = new StringBuilder("<html><body><p style='color:red;'>Failed to load content.</p></body></html>");
         }
         JEditorPane licence = new JEditorPane("text/html", html.toString());

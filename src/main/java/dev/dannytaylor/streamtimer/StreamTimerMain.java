@@ -11,6 +11,7 @@ import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
 import dev.dannytaylor.streamtimer.integration.IntegrationRegistry;
 import dev.dannytaylor.streamtimer.integration.twitch.TwitchIntegration;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 import dev.dannytaylor.streamtimer.render.GUI;
 import dev.dannytaylor.streamtimer.render.TextRenderer;
 import dev.dannytaylor.streamtimer.timer.Timer;
@@ -20,11 +21,11 @@ import dev.dannytaylor.streamtimer.util.Resources;
 import javax.swing.*;
 
 public class StreamTimerMain {
-    public static boolean running = true;
-    public static Timer timer = new Timer();
-    public static GUI gui = new GUI();
+    public static boolean running;
+    public static Timer timer;
+    public static GUI gui;
     public static ImageIcon icon;
-    public static TextRenderer textRenderer = new TextRenderer(576, 144);
+    public static TextRenderer textRenderer;
 
     public static void main(String[] args) {
         try {
@@ -48,14 +49,14 @@ public class StreamTimerMain {
                         if (sleepTime > 0) Thread.sleep(sleepTime);
                     }
                 } catch (Exception error) {
-                    System.err.println("Error whilst ticking: " + error);
+                    StreamTimerLoggerImpl.error("Error whilst ticking: " + error);
                     running = false;
                 }
             }
             StreamTimerMain.timer.stop();
             System.exit(0);
         } catch (InterruptedException error) {
-            System.err.println("Failed to start gui: " + error);
+            StreamTimerLoggerImpl.error("Failed to start gui: " + error);
         }
     }
 
@@ -66,5 +67,13 @@ public class StreamTimerMain {
         gui.updateTimer(time);
 
         TwitchIntegration.setIdSecretEnabled(!TwitchIntegration.twitch.hasClient());
+    }
+
+    static {
+        StreamTimerLoggerImpl.bootstrap();
+        running = true;
+        timer = new Timer();
+        gui = new GUI();
+        textRenderer = new TextRenderer(576, 144);
     }
 }

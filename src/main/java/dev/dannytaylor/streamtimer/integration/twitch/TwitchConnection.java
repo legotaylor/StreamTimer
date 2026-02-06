@@ -18,6 +18,7 @@ import com.github.twitch4j.common.enums.SubscriptionPlan;
 import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.integration.AuthConfig;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
 
 import java.util.ArrayList;
@@ -43,12 +44,12 @@ public class TwitchConnection {
     public void connect() {
         new Thread(() -> {
             if (!this.hasClient()) {
-                System.out.println("[Stream Timer/Twitch Integration] Creating Client...");
+                StreamTimerLoggerImpl.info("[Twitch Integration] Creating Client...");
                 OAuth2Credential credential = null;
                 try {
                     credential = new TwitchAuthenticator(AuthConfig.instance.twitchId.value(), AuthConfig.decrypt(AuthConfig.instance.twitchSecret.value()), AuthConfig.instance.twitchPort.value()).authenticate();
                 } catch (Exception error) {
-                    System.err.println("Failed to create twitch auth: " + error);
+                    StreamTimerLoggerImpl.error("Failed to create twitch auth: " + error);
                 }
                 if (credential != null) {
                     this.eventManager.setDefaultEventHandler(SimpleEventHandler.class);
@@ -57,7 +58,7 @@ public class TwitchConnection {
                     this.registerEvents();
                     if (AuthConfig.instance.twitchChannels.value().getFirst().isBlank()) {
                         AuthConfig.instance.twitchChannels.value().set(0, credential.getUserName());
-                        AuthConfig.instance.save();
+                        AuthConfig.toFile();
                         TwitchIntegration.channel.setText(credential.getUserName());
                     }
                     for (String username : AuthConfig.instance.twitchChannels.value()) {
@@ -78,7 +79,7 @@ public class TwitchConnection {
                 for (String username : this.usernames) {
                     if (this.isConnected(username)) this.leave(username);
                 }
-                System.out.println("[Stream Timer/Twitch Integration] Removing Client...");
+                StreamTimerLoggerImpl.info("[Twitch Integration] Removing Client...");
                 this.client.close();
                 this.client = null;
             }
@@ -89,15 +90,13 @@ public class TwitchConnection {
     private void join(String channelName) {
         this.client.getChat().joinChannel(channelName);
         String message = "Joined " + channelName + "!";
-        if (StreamTimerMain.gui.messageText != null) StreamTimerMain.gui.messageText.setText("[Twitch Integration] " + message);
-        System.out.println("[Stream Timer/Twitch Integration] " + message);
+        StreamTimerLoggerImpl.info("[Twitch Integration] " + message);
     }
 
     private void leave(String channelName) {
         this.client.getChat().leaveChannel(channelName);
         String message = "Left " + channelName + "!";
-        if (StreamTimerMain.gui.messageText != null) StreamTimerMain.gui.messageText.setText("[Twitch Integration] " + message);
-        System.out.println("[Stream Timer/Twitch Integration] " + message);
+        StreamTimerLoggerImpl.info("[Twitch Integration] " + message);
     }
 
     public boolean hasClient() {
@@ -136,7 +135,7 @@ public class TwitchConnection {
                     try {
                         addTime(Float.parseFloat(value), StreamTimerConfig.instance.twitchTimes.money.value(), StreamTimerConfig.instance.twitchTimes.moneySeconds.value(), "money command");
                     } catch (Exception error) {
-                        System.err.println("[Stream Timer/Twitch Integration] Failed to parse money command: " + error);
+                        StreamTimerLoggerImpl.error("[Twitch Integration] Failed to parse money command: " + error);
                     }
                 } else if (StreamTimerConfig.containsIgnoresCase(StreamTimerConfig.instance.twitchTimes.setCommand.value(), message[0])) {
                     String value = message[1];
@@ -170,14 +169,14 @@ public class TwitchConnection {
     private void registerSubs() {
         this.client.getEventManager().onEvent(GiftSubscriptionsEvent.class, event -> {
             SubscriptionPlan subPlan = event.getTier();
-            System.out.println("[GiftSubscriptionsEvent] " + subPlan.ordinalName());
+            StreamTimerLoggerImpl.info("[GiftSubscriptionsEvent] " + subPlan.ordinalName());
             if (subPlan.equals(SubscriptionPlan.TWITCH_PRIME) || subPlan.equals(SubscriptionPlan.TIER1)) onSub(1, event.getCount(), event.getTier().ordinalName() + " x" + event.getCount() + " Gifted Sub"); // You can't gift prime subs so we don't really have to check
             else if (subPlan.equals(SubscriptionPlan.TIER2)) onSub(2, event.getCount(), event.getTier().ordinalName() + " x" + event.getCount() + " Gifted Sub");
             else if (subPlan.equals(SubscriptionPlan.TIER3)) onSub(3, event.getCount(), event.getTier().ordinalName() + " x" + event.getCount() + " Gifted Sub");
         });
         this.client.getEventManager().onEvent(ExtendSubscriptionEvent.class, event -> {
             SubscriptionPlan subPlan = event.getSubPlan();
-            System.out.println("[ExtendSubscriptionEvent] " + subPlan.ordinalName());
+            StreamTimerLoggerImpl.info("[ExtendSubscriptionEvent] " + subPlan.ordinalName());
             if (subPlan.equals(SubscriptionPlan.TWITCH_PRIME) || subPlan.equals(SubscriptionPlan.TIER1)) onSub(1, 1, subPlan.ordinalName() + " Resub");
             else if (subPlan.equals(SubscriptionPlan.TIER2)) onSub(2, 1, subPlan.ordinalName() + " Resub");
             else if (subPlan.equals(SubscriptionPlan.TIER3)) onSub(3, 1, subPlan.ordinalName() + " Resub");
@@ -189,7 +188,7 @@ public class TwitchConnection {
             if (!event.getGifted()) {
                 if (event.getSubStreak() == 0) { // i think this should be right
                     SubscriptionPlan subPlan = event.getSubPlan();
-                    System.out.println("[SubscriptionEvent] " + subPlan.ordinalName());
+                    StreamTimerLoggerImpl.info("[SubscriptionEvent] " + subPlan.ordinalName());
                     if (subPlan.equals(SubscriptionPlan.TWITCH_PRIME) || subPlan.equals(SubscriptionPlan.TIER1)) onSub(1, 1, subPlan.ordinalName() + " Sub");
                     else if (subPlan.equals(SubscriptionPlan.TIER2)) onSub(2, 1, subPlan.ordinalName() + " Sub");
                     else if (subPlan.equals(SubscriptionPlan.TIER3)) onSub(3, 1, subPlan.ordinalName() + " Sub");
@@ -206,18 +205,13 @@ public class TwitchConnection {
 
     private void addTime(float value, float equValue, int equSeconds, String type) {
         double multi = StreamTimerConfig.instance.twitchTimes.multiplier.value();
-        System.out.println("[Stream Timer/Twitch Integration] addTime(value=" + value + ", equValue=" + equValue + ", equSeconds=" + equSeconds + ", type=" + type + ");" + (multi != 1.0 ? " * " + multi : ""));
+        StreamTimerLoggerImpl.info("[Twitch Integration] addTime(value=" + value + ", equValue=" + equValue + ", equSeconds=" + equSeconds + ", type=" + type + ");" + (multi != 1.0 ? " * " + multi : ""));
         long secondsToAdd = (long) (((value / equValue) * equSeconds) * multi);
         if (!StreamTimerMain.timer.isFinished()) {
             TimerUtils.setTimer(secondsToAdd, true, true);
-            String message = "Added " + TimerUtils.getTime(secondsToAdd * 1000L) + " to the timer" + (multi != 1.0 ? " using a multiplier of " + multi : ""); // we probably could send this to the twitch chat
-            String extendedMessage = message + " via " + type + "! (" + value + ")";
-            StreamTimerMain.gui.messageText.setText(extendedMessage);
-            System.out.println("[Stream Timer/Twitch Integration] " + extendedMessage);
+            StreamTimerLoggerImpl.info("[Twitch Integration] Added " + TimerUtils.getTime(secondsToAdd * 1000L) + " to the timer" + (multi != 1.0 ? " using a multiplier of " + multi : "") + " via " + type + "! (" + value + ")");
         } else {
-            String log = "Did not add time as timer has finished (" + value + " " + type + (multi != 1.0 ? " *" + multi : "") + ")";
-            StreamTimerMain.gui.messageText.setText(log);
-            System.out.println("[Stream Timer/Twitch Integration] " + log);
+            StreamTimerLoggerImpl.info("[Twitch Integration] " + "Did not add time as timer has finished (" + value + " " + type + (multi != 1.0 ? " *" + multi : "") + ")");
         }
     }
 }

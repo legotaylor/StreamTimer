@@ -12,6 +12,7 @@ import dev.dannytaylor.streamtimer.config.RenderMode;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
 import dev.dannytaylor.streamtimer.integration.AuthConfig;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 import dev.dannytaylor.streamtimer.render.GUI;
 import dev.dannytaylor.streamtimer.render.GUIWidgets;
 import dev.dannytaylor.streamtimer.util.FloatFilter;
@@ -328,7 +329,7 @@ public class TwitchIntegration {
         try {
             secret = AuthConfig.decrypt(AuthConfig.instance.twitchSecret.value());
         } catch (Exception error) {
-            System.err.println("Failed to decrypt secret: " + error);
+            StreamTimerLoggerImpl.error("Failed to decrypt secret: " + error);
         }
         clientSecret = new JPasswordField(secret);
         clientSecret.setEnabled(TwitchIntegration.twitch.hasClient());
@@ -364,7 +365,7 @@ public class TwitchIntegration {
                     Desktop.getDesktop().browse(new URI("https://dev.twitch.tv/console"));
                 } catch (Exception error) {
                     clientInfoLabel.setEnabled(false);
-                    System.err.println("Failed to open uri!");
+                    StreamTimerLoggerImpl.error("Failed to open uri!");
                 }
             }
         });
@@ -410,7 +411,7 @@ public class TwitchIntegration {
         try {
             secret = AuthConfig.encrypt(clientSecret.getText());
         } catch (Exception error) {
-            System.err.println("Failed to encrypt secret: " + error);
+            StreamTimerLoggerImpl.error("Failed to encrypt secret: " + error);
         }
         AuthConfig.instance.twitchChannels.value().set(0, channel.getText());
         AuthConfig.instance.twitchId.setValue(clientId.getText(), true);

@@ -9,6 +9,7 @@ package dev.dannytaylor.streamtimer.render;
 
 import com.jogamp.opengl.GL2;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,7 +53,7 @@ public class GLShaderRegistry {
             if (infoLen[0] > 0) {
                 byte[] infoLog = new byte[infoLen[0]];
                 gl.glGetShaderInfoLog(program, infoLen[0], null, 0, infoLog, 0);
-                System.err.println("Error compiling shader: " + new String(infoLog));
+                StreamTimerLoggerImpl.error("Error compiling shader: " + new String(infoLog));
             }
         }
 

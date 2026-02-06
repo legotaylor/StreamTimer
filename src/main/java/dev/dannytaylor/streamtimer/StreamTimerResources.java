@@ -9,6 +9,7 @@ package dev.dannytaylor.streamtimer;
 
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -42,7 +43,7 @@ public class StreamTimerResources {
                     if (shouldReload) StreamTimerConfig.reload();
                 }
             } catch (Exception error) {
-                System.err.println("Failed to move config: " + error);
+                StreamTimerLoggerImpl.error("Failed to move config: " + error);
             }
             try {
                 ClassLoader loader = StreamTimerResources.class.getClassLoader();
@@ -51,10 +52,10 @@ public class StreamTimerResources {
                 if ("jar".equals(locationUrl.getProtocol())) extractFromJar(locationUrl, outDir);
                 else extractFromFileSystem(Path.of(locationUrl.toURI()), outDir);
             } catch (Exception error) {
-                System.err.println("Failed to copy assets: " + error);
+                StreamTimerLoggerImpl.error("Failed to copy assets: " + error);
             }
         } catch (Exception error) {
-            System.err.println("Failed to process resources: " + error);
+            StreamTimerLoggerImpl.error("Failed to process resources: " + error);
         }
         latch.countDown();
     }
@@ -80,7 +81,7 @@ public class StreamTimerResources {
                 }
             }
         } catch (Exception error) {
-            System.err.println("Failed to copy assets from jar: " + error);
+            StreamTimerLoggerImpl.error("Failed to copy assets from jar: " + error);
         }
     }
 
@@ -101,7 +102,7 @@ public class StreamTimerResources {
                 }
             }
         } catch (Exception error) {
-            System.err.println("Failed to copy assets from file system: " + error);
+            StreamTimerLoggerImpl.error("Failed to copy assets from file system: " + error);
         }
     }
 }

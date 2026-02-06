@@ -28,6 +28,7 @@ dependencies {
     implementation("com.github.twitch4j:twitch4j:${project.twitch4j_version}")
     implementation("com.google.code.gson:gson:${project.gson_version}")
     implementation("org.java-websocket:Java-WebSocket:${project.websocket_version}")
+    implementation("com.github.legotaylor:logger:${project.logger_version}")
 }
 
 java {

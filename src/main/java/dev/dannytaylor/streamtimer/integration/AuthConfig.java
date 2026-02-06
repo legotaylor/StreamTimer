@@ -9,6 +9,7 @@ package dev.dannytaylor.streamtimer.integration;
 
 import dev.dannytaylor.streamtimer.config.ConfigHelper;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 import dev.dannytaylor.streamtimer.util.Crypt;
 import org.quiltmc.config.api.ReflectiveConfig;
 import org.quiltmc.config.api.annotations.Comment;
@@ -33,7 +34,7 @@ public class AuthConfig extends ReflectiveConfig {
 
     public static void bootstrap() {
         checkEncryption();
-        System.out.println("[Stream Timer] Initialized AuthConfig");
+        StreamTimerLoggerImpl.info("Initialized AuthConfig");
     }
 
     @Comment("DO NOT SHARE THIS FILE WITH ANYONE!")
@@ -52,7 +53,7 @@ public class AuthConfig extends ReflectiveConfig {
             TomlSerializer.INSTANCE.deserialize(instance, Files.newInputStream(new File(StaticVariables.name + "Assets/" + fileName + ".toml").toPath()));
             checkEncryption();
         } catch (Exception error) {
-            System.err.println("[StreamTimer] Error occurred whilst reloading config: " + error);
+            StreamTimerLoggerImpl.error("Error occurred whilst reloading config: " + error);
         }
     }
 
@@ -60,14 +61,14 @@ public class AuthConfig extends ReflectiveConfig {
         try {
             if (!Crypt.fileExists(keyPath)) Crypt.toFile(keyPath, Crypt.createKey());
         } catch (Exception error) {
-            System.err.println("[Stream Timer] Failed to create key: " + error);
+            StreamTimerLoggerImpl.error("Failed to create key: " + error);
         }
         try {
             encryptIfNeeded(instance.twitchSecret);
             encryptIfNeeded(instance.twitchAccessToken);
             encryptIfNeeded(instance.twitchRefreshToken);
         } catch (Exception error) {
-            System.err.println("[Stream Timer] Failed to check encryption: " + error);
+            StreamTimerLoggerImpl.error("Failed to check encryption: " + error);
         }
     }
 
@@ -81,5 +82,10 @@ public class AuthConfig extends ReflectiveConfig {
 
     public static String decrypt(String data) throws NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException, IOException {
         return Crypt.decrypt(data, Crypt.fromFile(keyPath));
+    }
+
+    public static void toFile() {
+        StreamTimerLoggerImpl.info("Saving auth config to file!");
+        instance.save();
     }
 }

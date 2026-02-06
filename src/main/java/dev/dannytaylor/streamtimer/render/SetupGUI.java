@@ -11,6 +11,7 @@ import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.RenderMode;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,10 +27,10 @@ public class SetupGUI {
     }
     
     private void create() {
-        System.out.println("[Stream Timer] Initializing GUI...");
+        StreamTimerLoggerImpl.info("Initializing GUI...");
         if (StreamTimerConfig.instance.skipSetupScreen.value()) launch(StreamTimerConfig.instance.previousRenderMode.value());
         else {
-            System.out.println("[Stream Timer] Launching Setup GUI...");
+            StreamTimerLoggerImpl.info("Launching Setup GUI...");
             this.frame = new JFrame(StaticVariables.name + ": Setup");
             Dimension size = new Dimension(576, 200);
             JPanel textPanel = new JPanel();
@@ -151,7 +152,7 @@ public class SetupGUI {
             if (!Path.of(StaticVariables.name + "Assets/vertex.glsl").toFile().exists() || !Path.of(StaticVariables.name + "Assets/fragment.glsl").toFile().exists()) {
                 if (renderMode.getRenderType().equals(RenderMode.RenderType.FRAME)) verifiedRenderMode = RenderMode.TEXT_FRAME;
                 else if (renderMode.getRenderType().equals(RenderMode.RenderType.DIALOG)) verifiedRenderMode = RenderMode.TEXT_DIALOG;
-                StreamTimerMain.gui.initMessageText = "Failed to load assets: Using legacy renderer instead!";
+                StreamTimerLoggerImpl.warn("Failed to load assets: Using legacy renderer instead!");
             }
         }
 

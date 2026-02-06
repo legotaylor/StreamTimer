@@ -9,6 +9,7 @@ package dev.dannytaylor.streamtimer.timer;
 
 import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 
 public class TimerUtils {
     public static String getTime(long millis, boolean showMillis) {
@@ -33,7 +34,7 @@ public class TimerUtils {
     }
 
     public static void setTimer(long seconds, boolean add, boolean save) {
-        System.out.println("[StreamTimer] Added " + getTime(seconds * 1000L) + " to the timer");
+        StreamTimerLoggerImpl.info("Added " + getTime(seconds * 1000L) + " to the timer");
         StreamTimerMain.timer.set(Math.max(0, (add ? getMillis() : 0) + seconds * 1000L), save); // we only save on start/pause/set/add/remove otherwise it is a lot of writes.
     }
 
@@ -109,14 +110,13 @@ public class TimerUtils {
         StreamTimerConfig.instance.addHours.setValue(String.format("%02d", h), false);
         StreamTimerConfig.instance.addMinutes.setValue(String.format("%02d", m), false);
         StreamTimerConfig.instance.addSeconds.setValue(String.format("%02d", s), false);
-        StreamTimerConfig.instance.save();
+        StreamTimerConfig.toFile();
     }
 
     public static void toggleTimer() {
         if (StreamTimerMain.timer.isRunning()) {
             StreamTimerMain.timer.stop();
             if (StreamTimerMain.gui != null) {
-                if (StreamTimerMain.gui.messageText != null) StreamTimerMain.gui.messageText.setText("Stopped timer!");
                 if (StreamTimerMain.gui.toggleButton != null) {
                     StreamTimerMain.gui.toggleButton.setText("START");
                     StreamTimerMain.gui.toggleButton.setToolTipText("Starts the timer");
@@ -125,7 +125,6 @@ public class TimerUtils {
         } else {
             StreamTimerMain.timer.start();
             if (StreamTimerMain.gui != null) {
-                if (StreamTimerMain.gui.messageText != null) StreamTimerMain.gui.messageText.setText("Started timer!");
                 if (StreamTimerMain.gui.toggleButton != null) {
                     StreamTimerMain.gui.toggleButton.setText("STOP");
                     StreamTimerMain.gui.toggleButton.setToolTipText("Stops the timer");

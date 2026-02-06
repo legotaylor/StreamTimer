@@ -9,6 +9,7 @@ package dev.dannytaylor.streamtimer.config;
 
 import dev.dannytaylor.streamtimer.data.StaticVariables;
 import dev.dannytaylor.streamtimer.integration.twitch.TwitchPermission;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 import org.quiltmc.config.api.ReflectiveConfig;
 import org.quiltmc.config.api.annotations.Comment;
 import org.quiltmc.config.api.serializers.TomlSerializer;
@@ -23,7 +24,7 @@ public class StreamTimerConfig extends ReflectiveConfig {
     public static StreamTimerConfig instance = ConfigHelper.register(StaticVariables.id, StaticVariables.id, StreamTimerConfig.class);
 
     public static void bootstrap() {
-        System.out.println("[Stream Timer] Initialized Config");
+        StreamTimerLoggerImpl.info("Initialized Config");
     }
 
     public final TrackedValue<Boolean> skipSetupScreen = this.value(false);
@@ -82,11 +83,13 @@ public class StreamTimerConfig extends ReflectiveConfig {
         public final TrackedValue<Float> multiplier = this.value(1.0F);
     }
 
+    public final TrackedValue<Boolean> debug = this.value(false);
+
     public static void reload() {
         try {
             TomlSerializer.INSTANCE.deserialize(instance, Files.newInputStream(new File(StaticVariables.name + "Assets/" + StaticVariables.id + ".toml").toPath()));
         } catch (Exception error) {
-            System.err.println("[StreamTimer] Error occurred whilst reloading config: " + error);
+            StreamTimerLoggerImpl.error("Error occurred whilst reloading config: " + error);
         }
     }
 
@@ -95,5 +98,10 @@ public class StreamTimerConfig extends ReflectiveConfig {
             if (string.equalsIgnoreCase(value)) return true;
         }
         return false;
+    }
+
+    public static void toFile() {
+        StreamTimerLoggerImpl.info("Saving config to file!");
+        instance.save();
     }
 }

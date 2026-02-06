@@ -7,6 +7,8 @@
 
 package dev.dannytaylor.streamtimer.audio;
 
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
+
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -23,11 +25,11 @@ public class SoundPlayer {
                     clip.start();
                     Thread.sleep(clip.getMicrosecondLength() / 1000);
                 } catch (Exception error) {
-                    System.err.println("Failed to play sound: " + error);
+                    StreamTimerLoggerImpl.error("Failed to play sound: " + error);
                 }
             }).start();
         } else {
-            System.err.println("Failed to play sound: Specified file does not exist " + file);
+            StreamTimerLoggerImpl.error("Failed to play sound: Specified file does not exist " + file);
         }
     }
 }

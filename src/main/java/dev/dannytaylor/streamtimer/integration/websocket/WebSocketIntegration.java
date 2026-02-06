@@ -11,16 +11,25 @@ import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.RenderMode;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 import dev.dannytaylor.streamtimer.render.GUI;
 import dev.dannytaylor.streamtimer.render.GUIWidgets;
+import dev.dannytaylor.streamtimer.util.IntegerFilter;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.AbstractDocument;
 import java.awt.*;
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.nio.file.Paths;
 
 public class WebSocketIntegration {
     private static WebSocketConnection connection;
     private static JButton connectButton;
+    private static JTextField portField;
+    private static JTextField browserSourceUrl;
 
     public static void bootstrap() {
         GUI.runBeforeVisible.add(WebSocketIntegration::runBeforeVisible);
@@ -59,7 +68,8 @@ public class WebSocketIntegration {
         // Browser Source URL (for reference)
         gbc.gridy = row++;
         gbc.gridx = 1;
-        JTextField browserSourceUrl = new JTextField("file:///" + Paths.get(StaticVariables.name + "Assets").toAbsolutePath() + "\\WebSocketClient.html" + "?type=ws&host=localhost&port=" + StreamTimerConfig.instance.webSocketPort.value());
+        browserSourceUrl = new JTextField();
+        updateUrl(true);
         browserSourceUrl.setEditable(false);
         tab.add(browserSourceUrl, gbc);
 
@@ -91,6 +101,36 @@ public class WebSocketIntegration {
         height.setEditable(false);
         tab.add(height, gbc);
 
+        // Port
+        gbc.gridy = row++;
+        gbc.weightx = 0;
+        gbc.gridx = 1;
+        JLabel portLabel = new JLabel("Port:");
+        portLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        tab.add(portLabel, gbc);
+        gbc.gridx = 2;
+        gbc.weightx = 0;
+        portField = new JTextField(String.valueOf(StreamTimerConfig.instance.webSocketPort.value()));
+        ((AbstractDocument) portField.getDocument()).setDocumentFilter(new IntegerFilter());
+        portField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateUrl(false);
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateUrl(false);
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateUrl(false);
+            }
+        });
+        portField.setEditable(WebSocketIntegration.isConnected());
+        tab.add(portField, gbc);
+
         // Auto Connect
         gbc.gridy = row++;
         gbc.gridx = 1;
@@ -109,7 +149,12 @@ public class WebSocketIntegration {
         gbc.anchor = GridBagConstraints.CENTER;
         connectButton = new JButton(isConnected() ? "Disconnect" : "Connect");
         connectButton.addActionListener(l -> {
-            connectButton.setEnabled(false);
+            disableWidgets();
+            if (portField != null) {
+                StreamTimerConfig.instance.webSocketPort.setValue(portField.getText().isBlank() ? StreamTimerConfig.instance.webSocketPort.getDefaultValue() : Integer.parseInt(portField.getText()), true);
+                portField.setText(String.valueOf(StreamTimerConfig.instance.webSocketPort.value()));
+            }
+            updateUrl(true);
             connectButton.setText(connectButton.getText() + "ing...");
             toggleConnected();
         });
@@ -132,8 +177,18 @@ public class WebSocketIntegration {
     }
 
     public static void connect() {
-        if (connection == null) (connection = new WebSocketConnection()).start();
-        else System.err.println("[Stream Timer/WebSocket Integration] Server already connected!");
+        int port = StreamTimerConfig.instance.webSocketPort.value();
+        if (isPortAvailable(port)) {
+            try {
+                if (connection == null) (connection = new WebSocketConnection(port)).start();
+                else StreamTimerLoggerImpl.error("[WebSocket Integration] Server already connected!");
+            } catch (Exception error) {
+                StreamTimerLoggerImpl.error("[WebSocket Integration] Failed to start web socket server: " + error);
+                connection = null;
+            }
+        } else {
+            StreamTimerLoggerImpl.error("[WebSocket Integration] Port is already bound!");
+        }
         enableWidgets();
     }
 
@@ -142,17 +197,29 @@ public class WebSocketIntegration {
             try {
                 connection.stop();
             } catch (Exception error) {
-                System.err.println("[Stream Timer/WebSocket Integration] Failed to stop server: " + error);
+                StreamTimerLoggerImpl.error("[WebSocket Integration] Failed to stop server: " + error);
             }
             connection = null;
-        } else System.err.println("[Stream Timer/WebSocket Integration] Server doesn't exist!");
+        } else StreamTimerLoggerImpl.error("[WebSocket Integration] Server doesn't exist!");
         enableWidgets();
+    }
+
+    public static void disableWidgets() {
+        if (portField != null) portField.setEditable(false);
+        if (connectButton != null) connectButton.setEnabled(false);
     }
 
     public static void enableWidgets() {
         if (connectButton != null) {
             connectButton.setText(isConnected() ? "Disconnect" : "Connect");
             connectButton.setEnabled(true);
+        }
+        if (portField != null) portField.setEditable(!isConnected());
+    }
+
+    public static void updateUrl(boolean useConfig) {
+        if (browserSourceUrl != null) {
+            browserSourceUrl.setText("file:///" + Paths.get(StaticVariables.name + "Assets").toAbsolutePath() + "\\WebSocketClient.html" + "?type=ws&host=localhost&port=" + (!useConfig && portField != null ? (portField.getText().isBlank() ? StreamTimerConfig.instance.webSocketPort.getDefaultValue() : portField.getText()) : StreamTimerConfig.instance.webSocketPort.value()));
         }
     }
 
@@ -162,5 +229,15 @@ public class WebSocketIntegration {
 
     public static void sendFrame(byte[] frame) {
         if (isConnected()) connection.sendFrame(frame);
+    }
+
+
+    public static boolean isPortAvailable(int port) {
+        try (ServerSocket socket = new ServerSocket(port)) {
+            socket.setReuseAddress(true);
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
     }
 }

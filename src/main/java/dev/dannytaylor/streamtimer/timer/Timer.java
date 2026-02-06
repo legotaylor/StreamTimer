@@ -11,6 +11,7 @@ import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.audio.SoundPlayer;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -43,7 +44,7 @@ public class Timer {
                 if (StreamTimerConfig.instance.finishSound.value()) {
                     SoundPlayer.playSound(new File(Path.of(StaticVariables.name + "Assets").toFile(), "finishSound.wav"));
                 }
-                StreamTimerMain.gui.messageText.setText("Timer finished!");
+                StreamTimerLoggerImpl.info("Timer finished!");
                 StreamTimerMain.gui.toggleButton.setText("START");
                 StreamTimerMain.gui.toggleButton.setToolTipText("Starts the timer");
                 return;
@@ -65,18 +66,18 @@ public class Timer {
         this.running = true;
         this.finished = false;
         save(true);
-        System.out.println("[Stream Timer] Started Timer");
+        StreamTimerLoggerImpl.info("Started Timer");
     }
 
     public void stop() {
         this.running = false;
         save(true);
-        System.out.println("[Stream Timer] Stopped Timer");
+        StreamTimerLoggerImpl.info("Stopped Timer");
     }
 
     public void set(long time, boolean save) {
         this.time = time;
-        System.out.println("[Stream Timer] Set Timer to " + TimerUtils.getTime(time));
+        StreamTimerLoggerImpl.info("Set Timer to " + TimerUtils.getTime(time));
         save(save);
     }
 
@@ -93,7 +94,7 @@ public class Timer {
     }
 
     public void save(boolean toFile) {
-        if (toFile) System.out.println("[Stream Timer] Saving Timer");
+        if (toFile) StreamTimerLoggerImpl.info("Saving Timer to file");
         StreamTimerConfig.instance.time.setValue(time, toFile);
     }
 }

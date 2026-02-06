@@ -8,40 +8,42 @@
 package dev.dannytaylor.streamtimer.integration.websocket;
 
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 
+import java.net.BindException;
 import java.net.InetSocketAddress;
 
 public class WebSocketConnection extends WebSocketServer {
-    public WebSocketConnection() {
-        super(new InetSocketAddress(StreamTimerConfig.instance.webSocketPort.value()));
+    public WebSocketConnection(int port) {
+        super(new InetSocketAddress(port));
     }
 
     @Override
     public void onOpen(WebSocket webSocket, ClientHandshake clientHandshake) {
-        System.out.println("[Stream Timer/WebSocket Integration] New connection: " + webSocket.getRemoteSocketAddress());
+        StreamTimerLoggerImpl.info("[WebSocket Integration] New connection: " + webSocket.getRemoteSocketAddress());
     }
 
     @Override
     public void onClose(WebSocket webSocket, int i, String s, boolean b) {
-        System.out.println("[Stream Timer/WebSocket Integration] Closed connection: " + webSocket.getRemoteSocketAddress());
+        StreamTimerLoggerImpl.info("[WebSocket Integration] Closed connection: " + webSocket.getRemoteSocketAddress());
     }
 
     @Override
     public void onMessage(WebSocket webSocket, String s) {
-        System.out.println("[Stream Timer/WebSocket Integration] (" + webSocket.getRemoteSocketAddress() + "): " + s);
+        StreamTimerLoggerImpl.info("[WebSocket Integration] (" + webSocket.getRemoteSocketAddress() + "): " + s);
     }
 
     @Override
     public void onError(WebSocket webSocket, Exception e) {
-        System.err.println("[Stream Timer/WebSocket Integration] Error: " + e);
+        StreamTimerLoggerImpl.error("[WebSocket Integration] Error: " + e);
     }
 
     @Override
     public void onStart() {
-        System.out.println("[Stream Timer/WebSocket Integration] Started server on port " + this.getPort() + "!");
+        StreamTimerLoggerImpl.info("[WebSocket Integration] Started server on port " + this.getPort() + "!");
     }
 
     private void sendFrame(WebSocket webSocket, byte[] frame) {

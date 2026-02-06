@@ -13,6 +13,7 @@ import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpServer;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
 import dev.dannytaylor.streamtimer.integration.AuthConfig;
+import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 
 import java.awt.*;
 import java.io.IOException;
@@ -53,23 +54,23 @@ public class TwitchAuthenticator {
             if (!AuthConfig.instance.twitchAccessToken.value().isBlank()) {
                 if (AuthConfig.instance.twitchTokenExpiry.value() < System.currentTimeMillis() + 60_000) {
                     try {
-                        System.out.println("[Stream Timer/Twitch Integration] Authenticating via saved refresh access token...");
+                        StreamTimerLoggerImpl.info("[Twitch Integration] Authenticating via saved refresh access token...");
                         accessToken = refreshAccessToken(AuthConfig.decrypt(AuthConfig.instance.twitchRefreshToken.value()));
                     } catch (Exception error) {
-                        System.err.println("[Stream Timer/Twitch Integration] Failed to decrypt saved refresh access token: " + error);
+                        StreamTimerLoggerImpl.error("[Twitch Integration] Failed to decrypt saved refresh access token: " + error);
                     }
                 } else {
                     try {
-                        System.out.println("[Stream Timer/Twitch Integration] Authenticating via saved access token...");
+                        StreamTimerLoggerImpl.info("[Twitch Integration] Authenticating via saved access token...");
                         accessToken = AuthConfig.decrypt(AuthConfig.instance.twitchAccessToken.value());
                     } catch (Exception error) {
-                        System.err.println("[Stream Timer/Twitch Integration] Failed to decrypt saved access token: " + error);
+                        StreamTimerLoggerImpl.error("[Twitch Integration] Failed to decrypt saved access token: " + error);
                     }
                 }
             }
 
             if (accessToken == null) {
-                System.out.println("[Stream Timer/Twitch Integration] Requesting new access token...");
+                StreamTimerLoggerImpl.info("[Twitch Integration] Requesting new access token...");
                 CompletableFuture<String> codeFuture = new CompletableFuture<>();
                 startCallback(codeFuture);
                 openBrowser(getAuthURL());
@@ -78,7 +79,7 @@ public class TwitchAuthenticator {
 
             return new OAuth2Credential("twitch", accessToken);
         } catch (Exception error) {
-            System.err.println("[Stream Timer/Twitch Integration] Failed to authenticate with Twitch: " + error);
+            StreamTimerLoggerImpl.error("[Twitch Integration] Failed to authenticate with Twitch: " + error);
             return null;
         }
     }
@@ -91,7 +92,7 @@ public class TwitchAuthenticator {
             AuthConfig.instance.twitchRefreshToken.setValue(AuthConfig.encrypt(jsonObject.get("refresh_token").getAsString()), true);
             AuthConfig.instance.twitchTokenExpiry.setValue(System.currentTimeMillis() + jsonObject.get("expires_in").getAsLong() * 1000L, true);
         } catch (Exception error) {
-            System.err.println("[Stream Timer/Twitch Integration] Failed to save tokens: " + error);
+            StreamTimerLoggerImpl.error("[Twitch Integration] Failed to save tokens: " + error);
         }
         return accessToken;
     }
