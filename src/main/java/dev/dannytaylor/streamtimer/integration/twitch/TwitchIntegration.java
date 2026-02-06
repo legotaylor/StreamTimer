@@ -58,7 +58,6 @@ public class TwitchIntegration {
         int row = 0;
 
         JCheckBox follow = GUIWidgets.createCheckbox(StreamTimerConfig.instance.twitchTimes.followEnabled.value());
-        follow.addChangeListener(l -> StreamTimerConfig.instance.twitchTimes.followEnabled.setValue(follow.isSelected(), true));
         gbc.gridx = 0;
         gbc.gridy = row++;
         gbc.gridwidth = 1;
@@ -74,7 +73,6 @@ public class TwitchIntegration {
         tab.add(secondsPerFollowLabel, gbc);
 
         JCheckBox bits = GUIWidgets.createCheckbox(StreamTimerConfig.instance.twitchTimes.bitsEnabled.value());
-        bits.addChangeListener(l -> StreamTimerConfig.instance.twitchTimes.bitsEnabled.setValue(bits.isSelected(), true));
         gbc.gridx = 0;
         gbc.gridy = row++;
         tab.add(bits, gbc);
@@ -99,9 +97,6 @@ public class TwitchIntegration {
 
         JComboBox<TwitchPermission> commandCombo = new JComboBox<>(TwitchPermission.values());
         commandCombo.setSelectedItem(StreamTimerConfig.instance.twitchTimes.commandEnabled.value());
-        commandCombo.addActionListener(e ->
-                StreamTimerConfig.instance.twitchTimes.commandEnabled.setValue((TwitchPermission) commandCombo.getSelectedItem(), true)
-        );
         gbc.gridx = 0;
         gbc.gridy = row++;
         tab.add(commandCombo, gbc);
@@ -125,7 +120,6 @@ public class TwitchIntegration {
         tab.add(moneyLabel, gbc);
 
         JCheckBox tierOne = GUIWidgets.createCheckbox(StreamTimerConfig.instance.twitchTimes.tierOneEnabled.value());
-        tierOne.addChangeListener(l -> StreamTimerConfig.instance.twitchTimes.tierOneEnabled.setValue(tierOne.isSelected(), true));
         gbc.gridx = 0;
         gbc.gridy = row++;
         tab.add(tierOne, gbc);
@@ -143,7 +137,6 @@ public class TwitchIntegration {
         gbc.gridwidth = 1;
 
         JCheckBox tierTwo = GUIWidgets.createCheckbox(StreamTimerConfig.instance.twitchTimes.tierTwoEnabled.value());
-        tierTwo.addChangeListener(l -> StreamTimerConfig.instance.twitchTimes.tierTwoEnabled.setValue(tierTwo.isSelected(), true));
         gbc.gridx = 0;
         gbc.gridy = row++;
         tab.add(tierTwo, gbc);
@@ -161,7 +154,6 @@ public class TwitchIntegration {
         gbc.gridwidth = 1;
 
         JCheckBox tierThree = GUIWidgets.createCheckbox(StreamTimerConfig.instance.twitchTimes.tierThreeEnabled.value());
-        tierThree.addChangeListener(l -> StreamTimerConfig.instance.twitchTimes.tierThreeEnabled.setValue(tierThree.isSelected(), true));
         gbc.gridx = 0;
         gbc.gridy = row++;
         tab.add(tierThree, gbc);
@@ -178,9 +170,22 @@ public class TwitchIntegration {
 
         gbc.gridx = 0;
         gbc.gridy = row++;
+
+        JLabel multiplierLabel = new JLabel("Multiplier", SwingConstants.RIGHT);
+        gbc.gridwidth = 2;
+        tab.add(multiplierLabel, gbc);
+
+        JTextField multiplier = GUIWidgets.createText(String.valueOf(StreamTimerConfig.instance.twitchTimes.multiplier.value()));
+        ((AbstractDocument) multiplier.getDocument()).setDocumentFilter(new FloatFilter());
+        gbc.gridx = 2;
+        gbc.gridwidth = 1;
+        tab.add(multiplier, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = row++;
         gbc.gridwidth = 5;
-        JButton applyTimes = GUIWidgets.createButton("Apply Times");
-        applyTimes.addActionListener(l -> {
+        JButton applyChanges = GUIWidgets.createButton("Apply Changes");
+        applyChanges.addActionListener(l -> {
             StreamTimerConfig.instance.twitchTimes.followSeconds.setValue(Integer.valueOf(followSeconds.getText()), false);
             StreamTimerConfig.instance.twitchTimes.bitsSeconds.setValue(Integer.valueOf(bitsSeconds.getText()), false);
             StreamTimerConfig.instance.twitchTimes.bits.setValue(Integer.valueOf(perBits.getText()), false);
@@ -188,9 +193,41 @@ public class TwitchIntegration {
             StreamTimerConfig.instance.twitchTimes.money.setValue(Float.valueOf(perMoney.getText()), false);
             StreamTimerConfig.instance.twitchTimes.tierOneSeconds.setValue(Integer.valueOf(tierOneSeconds.getText()), false);
             StreamTimerConfig.instance.twitchTimes.tierTwoSeconds.setValue(Integer.valueOf(tierTwoSeconds.getText()), false);
-            StreamTimerConfig.instance.twitchTimes.tierThreeSeconds.setValue(Integer.valueOf(tierThreeSeconds.getText()), true);
+            StreamTimerConfig.instance.twitchTimes.tierThreeSeconds.setValue(Integer.valueOf(tierThreeSeconds.getText()), false);
+            StreamTimerConfig.instance.twitchTimes.multiplier.setValue(Float.valueOf(multiplier.getText()), false);
+
+            StreamTimerConfig.instance.twitchTimes.followEnabled.setValue(follow.isSelected(), false);
+            StreamTimerConfig.instance.twitchTimes.bitsEnabled.setValue(bits.isSelected(), false);
+            StreamTimerConfig.instance.twitchTimes.commandEnabled.setValue((TwitchPermission) commandCombo.getSelectedItem(), false);
+            StreamTimerConfig.instance.twitchTimes.tierOneEnabled.setValue(tierOne.isSelected(), false);
+            StreamTimerConfig.instance.twitchTimes.tierTwoEnabled.setValue(tierTwo.isSelected(), false);
+            StreamTimerConfig.instance.twitchTimes.tierThreeEnabled.setValue(tierThree.isSelected(), true);
         });
-        tab.add(applyTimes, gbc);
+        tab.add(applyChanges, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = row++;
+        gbc.gridwidth = 5;
+        JButton cancelChanges = GUIWidgets.createButton("Cancel");
+        cancelChanges.addActionListener(l -> {
+            followSeconds.setText(String.valueOf(StreamTimerConfig.instance.twitchTimes.followSeconds.value()));
+            bitsSeconds.setText(String.valueOf(StreamTimerConfig.instance.twitchTimes.bitsSeconds.value()));
+            perBits.setText(String.valueOf(StreamTimerConfig.instance.twitchTimes.bits.value()));
+            moneySeconds.setText(String.valueOf(StreamTimerConfig.instance.twitchTimes.moneySeconds.value()));
+            perMoney.setText(String.valueOf(StreamTimerConfig.instance.twitchTimes.money.value()));
+            tierOneSeconds.setText(String.valueOf(StreamTimerConfig.instance.twitchTimes.tierOneSeconds.value()));
+            tierTwoSeconds.setText(String.valueOf(StreamTimerConfig.instance.twitchTimes.tierTwoSeconds.value()));
+            tierThreeSeconds.setText(String.valueOf(StreamTimerConfig.instance.twitchTimes.tierThreeSeconds.value()));
+            multiplier.setText(String.valueOf(StreamTimerConfig.instance.twitchTimes.multiplier.value()));
+
+            follow.setSelected(StreamTimerConfig.instance.twitchTimes.followEnabled.value());
+            bits.setSelected(StreamTimerConfig.instance.twitchTimes.bitsEnabled.value());
+            commandCombo.setSelectedItem(StreamTimerConfig.instance.twitchTimes.commandEnabled.value());
+            tierOne.setSelected(StreamTimerConfig.instance.twitchTimes.tierOneEnabled.value());
+            tierTwo.setSelected(StreamTimerConfig.instance.twitchTimes.tierTwoEnabled.value());
+            tierThree.setSelected(StreamTimerConfig.instance.twitchTimes.tierThreeEnabled.value());
+        });
+        tab.add(cancelChanges, gbc);
 
         gbc = new GridBagConstraints();
         gbc.gridx = 0;

@@ -186,12 +186,14 @@ public class TwitchConnection {
             // Is there a better way to do this?
             // Does this function as intended?
             // Why did the event get fired by the total amount gifted ever...
-            if (!event.getGifted() && event.getMonths() == 0 && event.getSubStreak() == 0) {
-                SubscriptionPlan subPlan = event.getSubPlan();
-                System.out.println("[SubscriptionEvent] " + subPlan.ordinalName());
-                if (subPlan.equals(SubscriptionPlan.TWITCH_PRIME) || subPlan.equals(SubscriptionPlan.TIER1)) onSub(1, 1, subPlan.ordinalName() + " Sub");
-                else if (subPlan.equals(SubscriptionPlan.TIER2)) onSub(2, 1, subPlan.ordinalName() + " Sub");
-                else if (subPlan.equals(SubscriptionPlan.TIER3)) onSub(3, 1, subPlan.ordinalName() + " Sub");
+            if (!event.getGifted()) {
+                if (event.getSubStreak() == 0) { // i think this should be right
+                    SubscriptionPlan subPlan = event.getSubPlan();
+                    System.out.println("[SubscriptionEvent] " + subPlan.ordinalName());
+                    if (subPlan.equals(SubscriptionPlan.TWITCH_PRIME) || subPlan.equals(SubscriptionPlan.TIER1)) onSub(1, 1, subPlan.ordinalName() + " Sub");
+                    else if (subPlan.equals(SubscriptionPlan.TIER2)) onSub(2, 1, subPlan.ordinalName() + " Sub");
+                    else if (subPlan.equals(SubscriptionPlan.TIER3)) onSub(3, 1, subPlan.ordinalName() + " Sub");
+                }
             }
         });
     }
@@ -203,16 +205,17 @@ public class TwitchConnection {
     }
 
     private void addTime(float value, float equValue, int equSeconds, String type) {
-        System.out.println("[Stream Timer/Twitch Integration] addTime(value=" + value + ", equValue=" + equValue + ", equSeconds=" + equSeconds + ", type=" + type + ");");
-        long secondsToAdd = (long) (value / equValue) * equSeconds;
+        double multi = StreamTimerConfig.instance.twitchTimes.multiplier.value();
+        System.out.println("[Stream Timer/Twitch Integration] addTime(value=" + value + ", equValue=" + equValue + ", equSeconds=" + equSeconds + ", type=" + type + ");" + (multi != 1.0 ? " * " + multi : ""));
+        long secondsToAdd = (long) (((value / equValue) * equSeconds) * multi);
         if (!StreamTimerMain.timer.isFinished()) {
             TimerUtils.setTimer(secondsToAdd, true, true);
-            String message = "Added " + TimerUtils.getTime(secondsToAdd * 1000L) + " to the timer"; // we probably could send this to the twitch chat
+            String message = "Added " + TimerUtils.getTime(secondsToAdd * 1000L) + " to the timer" + (multi != 1.0 ? " using a multiplier of " + multi : ""); // we probably could send this to the twitch chat
             String extendedMessage = message + " via " + type + "! (" + value + ")";
             StreamTimerMain.gui.messageText.setText(extendedMessage);
             System.out.println("[Stream Timer/Twitch Integration] " + extendedMessage);
         } else {
-            String log = "Did not add time as timer has finished (" + value + " " + type + ")";
+            String log = "Did not add time as timer has finished (" + value + " " + type + (multi != 1.0 ? " *" + multi : "") + ")";
             StreamTimerMain.gui.messageText.setText(log);
             System.out.println("[Stream Timer/Twitch Integration] " + log);
         }

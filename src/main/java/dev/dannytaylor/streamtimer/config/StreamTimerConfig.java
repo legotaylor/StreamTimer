@@ -78,6 +78,8 @@ public class StreamTimerConfig extends ReflectiveConfig {
 
         public final TrackedValue<Boolean> followEnabled = this.value(false);
         public final TrackedValue<Integer> followSeconds = this.value(0);
+
+        public final TrackedValue<Float> multiplier = this.value(1.0F);
     }
 
     public static void reload() {
