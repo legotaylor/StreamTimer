@@ -112,7 +112,7 @@ public class GUI {
         });
         configureRow.add(this.toggleButton);
         this.configureButton = GUIWidgets.createButton("...");
-        this.configureButton.setPreferredSize(new Dimension(26, 26));
+        this.configureButton.setMinimumSize(new Dimension(26, 26));
         this.configureButton.setToolTipText("Configure");
 
         configWindow = new JDialog(this.window);
@@ -167,7 +167,7 @@ public class GUI {
         gbc.gridy = 2;
         JPanel timerRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
         JTextField hours = GUIWidgets.createText(StreamTimerConfig.instance.addHours.value(), 2);
-        hours.setToolTipText("Seconds");
+        hours.setToolTipText("Hours");
         JTextField minutes = GUIWidgets.createText(StreamTimerConfig.instance.addMinutes.value(), 2);
         minutes.setToolTipText("Minutes");
         JTextField seconds = GUIWidgets.createText(StreamTimerConfig.instance.addSeconds.value(), 2);
@@ -307,7 +307,15 @@ public class GUI {
     private void updateTheme(Window frame, boolean isDark) {
         try {
             UIManager.setLookAndFeel(StreamTimerConfig.instance.theme.value().getTheme(isDark));
-            if (frame != null) SwingUtilities.updateComponentTreeUI(frame);
+            if (frame != null) {
+                SwingUtilities.updateComponentTreeUI(frame);
+                frame.invalidate();
+                frame.validate();
+                Dimension size = frame.getSize();
+                frame.pack();
+                frame.setSize(size);
+                frame.repaint();
+            }
         } catch (Exception error) {
             StreamTimerLoggerImpl.error("Failed to update theme: " + error);
         }
