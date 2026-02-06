@@ -7,13 +7,11 @@
 
 package dev.dannytaylor.streamtimer.integration.websocket;
 
-import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 
-import java.net.BindException;
 import java.net.InetSocketAddress;
 
 public class WebSocketConnection extends WebSocketServer {

@@ -32,12 +32,17 @@ public class WebSocketIntegration {
     private static JTextField browserSourceUrl;
 
     public static void bootstrap() {
-        GUI.runBeforeVisible.add(WebSocketIntegration::runBeforeVisible);
+        String name = "WebSocket Integration";
+        GUI.addBeforeVisible(name, WebSocketIntegration::runBeforeVisible);
     }
 
     private static void runBeforeVisible(RenderMode renderMode) {
-        StreamTimerMain.gui.configureTabs.addTab("WebSocket", getConnectionTab2(renderMode));
-        if (StreamTimerConfig.instance.webSocketAutoConnect.value()) connect();
+        try {
+            StreamTimerMain.gui.configureTabs.addTab("WebSocket", getConnectionTab2(renderMode));
+            if (StreamTimerConfig.instance.webSocketAutoConnect.value()) connect();
+        } catch (Exception error) {
+            StreamTimerLoggerImpl.error("[WebSocket Integration] Failed to initialize: " + error);
+        }
     }
 
     private static JPanel getConnectionTab2(RenderMode renderMode) {
@@ -194,14 +199,23 @@ public class WebSocketIntegration {
 
     public static void disconnect() {
         if (connection != null) {
+            close();
+        } else StreamTimerLoggerImpl.error("[WebSocket Integration] Server doesn't exist!");
+        enableWidgets();
+    }
+
+    public static boolean close() {
+        if (connection != null) {
             try {
                 connection.stop();
             } catch (Exception error) {
                 StreamTimerLoggerImpl.error("[WebSocket Integration] Failed to stop server: " + error);
             }
             connection = null;
-        } else StreamTimerLoggerImpl.error("[WebSocket Integration] Server doesn't exist!");
-        enableWidgets();
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public static void disableWidgets() {

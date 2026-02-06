@@ -26,6 +26,8 @@ public class StreamTimerMain {
     public static GUI gui;
     public static ImageIcon icon;
     public static TextRenderer textRenderer;
+    public static int saveTicks;
+    public static boolean canStart;
 
     public static void main(String[] args) {
         try {
@@ -34,30 +36,45 @@ public class StreamTimerMain {
             icon = Resources.getTexture(StreamTimerMain.class.getResource(StaticVariables.logo), 64, 64);
             StreamTimerConfig.bootstrap();
             IntegrationRegistry.bootstrap();
+            gui = new GUI();
             gui.latch.await();
-            long nextTick = System.nanoTime();
-            while (running) {
-                try {
-                    long now = System.nanoTime();
-                    if (now >= nextTick) {
-                        tick();
-                        long tickRate = 1000000000 / 20;
-                        nextTick += tickRate;
-                        if (System.nanoTime() > nextTick + tickRate * 20) nextTick = System.nanoTime();
-                    } else {
-                        long sleepTime = (nextTick - now) / 1000000L;
-                        if (sleepTime > 0) Thread.sleep(sleepTime);
+            if (canStart) {
+                long nextTick = System.nanoTime();
+                while (running) {
+                    try {
+                        long now = System.nanoTime();
+                        if (now >= nextTick) {
+                            tick();
+                            long tickRate = 1000000000 / 20;
+                            nextTick += tickRate;
+                            if (System.nanoTime() > nextTick + tickRate * 20) nextTick = System.nanoTime();
+                        } else {
+                            long sleepTime = (nextTick - now) / 1000000L;
+                            if (sleepTime > 0) Thread.sleep(sleepTime);
+                        }
+                    } catch (Exception error) {
+                        StreamTimerLoggerImpl.error("Error whilst ticking: " + error);
+                        running = false;
                     }
-                } catch (Exception error) {
-                    StreamTimerLoggerImpl.error("Error whilst ticking: " + error);
-                    running = false;
                 }
             }
-            StreamTimerMain.timer.stop();
-            System.exit(0);
+            close();
         } catch (InterruptedException error) {
             StreamTimerLoggerImpl.error("Failed to start gui: " + error);
         }
+    }
+
+    public static void close() {
+        running = false;
+        StreamTimerLoggerImpl.info("Closing " + StaticVariables.name + "!");
+        timer.stop();
+        IntegrationRegistry.close();
+        try {
+            IntegrationRegistry.closeLatch.await();
+        } catch (Exception error) {
+            System.exit(1);
+        }
+        System.exit(0);
     }
 
     public static void tick() {
@@ -67,13 +84,20 @@ public class StreamTimerMain {
         gui.updateTimer(time);
 
         TwitchIntegration.setIdSecretEnabled(!TwitchIntegration.twitch.hasClient());
+
+        if (timer.isRunning() && StreamTimerConfig.instance.saveTicks.value() > 0) {
+            if (saveTicks < StreamTimerConfig.instance.saveTicks.value()) saveTicks++;
+            else {
+                StreamTimerConfig.toFile();
+                saveTicks = 0;
+            }
+        }
     }
 
     static {
         StreamTimerLoggerImpl.bootstrap();
         running = true;
         timer = new Timer();
-        gui = new GUI();
         textRenderer = new TextRenderer(576, 144);
     }
 }

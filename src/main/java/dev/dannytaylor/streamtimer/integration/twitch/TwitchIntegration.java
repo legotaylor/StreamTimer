@@ -32,20 +32,28 @@ public class TwitchIntegration {
 
     private static JTextField clientId;
     private static JTextField clientSecret;
-    public static JTextField channel;
 
     public static void bootstrap() {
-        GUI.runBeforeVisible.add(TwitchIntegration::runBeforeVisible);
-        GUI.runOnConfigClose.add((renderMode) -> save());
+        String name = "Twitch Integration";
+        GUI.addBeforeVisible(name, TwitchIntegration::runBeforeVisible);
+        GUI.addOnConfigClose(name, (renderMode) -> save());
+    }
+
+    public static void close() {
+        twitch.closeConnections();
     }
 
     private static void runBeforeVisible(RenderMode renderMode) {
-        JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("Times", getTimesTab(renderMode));
-        tabs.addTab("Connection", getConnectionTab(renderMode));
-        StreamTimerMain.gui.configureTabs.addTab("Twitch Integration", tabs);
+        try {
+            JTabbedPane tabs = new JTabbedPane();
+            tabs.addTab("Times", getTimesTab(renderMode));
+            tabs.addTab("Connection", getConnectionTab(renderMode));
+            StreamTimerMain.gui.configureTabs.addTab("Twitch Integration", tabs);
 
-        if (AuthConfig.instance.twitchAutoConnect.value()) twitch.connect();
+            if (AuthConfig.instance.twitchAutoConnect.value()) twitch.connect();
+        } catch (Exception error) {
+            StreamTimerLoggerImpl.error("[Twitch Integration] Failed to initialize: " + error);
+        }
     }
 
     private static JPanel getTimesTab(RenderMode renderMode) {
@@ -329,7 +337,7 @@ public class TwitchIntegration {
         try {
             secret = AuthConfig.decrypt(AuthConfig.instance.twitchSecret.value());
         } catch (Exception error) {
-            StreamTimerLoggerImpl.error("Failed to decrypt secret: " + error);
+            System.err.println("Failed to decrypt secret: " + error);
         }
         clientSecret = new JPasswordField(secret);
         clientSecret.setEnabled(TwitchIntegration.twitch.hasClient());
@@ -337,18 +345,6 @@ public class TwitchIntegration {
         clientSecret.getActionMap().put(DefaultEditorKit.cutAction, null);
         clientSecret.setToolTipText(doNotShareSecretMessage);
         tab.add(clientSecret, gbc);
-
-        // Channel
-        gbc.gridy = row++;
-        gbc.gridx = 1;
-        JLabel channelLabel = new JLabel("Twitch Channel:");
-        channelLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        tab.add(channelLabel, gbc);
-        gbc.gridx = 2;
-        channel = new JTextField(AuthConfig.instance.twitchChannels.value().getFirst());
-        channel.setEnabled(TwitchIntegration.twitch.hasClient());
-        channel.setToolTipText("If left blank, auto fills with application username.");
-        tab.add(channel, gbc);
 
         // Client ID/Secret Info
         gbc.gridy = row++;
@@ -365,7 +361,7 @@ public class TwitchIntegration {
                     Desktop.getDesktop().browse(new URI("https://dev.twitch.tv/console"));
                 } catch (Exception error) {
                     clientInfoLabel.setEnabled(false);
-                    StreamTimerLoggerImpl.error("Failed to open uri!");
+                    System.err.println("Failed to open uri!");
                 }
             }
         });
@@ -409,11 +405,10 @@ public class TwitchIntegration {
     private static void save() {
         String secret = "";
         try {
-            secret = AuthConfig.encrypt(clientSecret.getText());
+            if (!clientSecret.getText().isBlank()) secret = AuthConfig.encrypt(clientSecret.getText());
         } catch (Exception error) {
-            StreamTimerLoggerImpl.error("Failed to encrypt secret: " + error);
+            StreamTimerLoggerImpl.error("[Twitch Integration] Failed to encrypt secret: " + error);
         }
-        AuthConfig.instance.twitchChannels.value().set(0, channel.getText());
         AuthConfig.instance.twitchId.setValue(clientId.getText(), true);
         AuthConfig.instance.twitchSecret.setValue(secret, true);
     }
@@ -421,6 +416,5 @@ public class TwitchIntegration {
     public static void setIdSecretEnabled(boolean value) {
         if (clientId != null) clientId.setEnabled(value);
         if (clientSecret != null) clientSecret.setEnabled(value);
-        if (channel != null) channel.setEnabled(value);
     }
 }

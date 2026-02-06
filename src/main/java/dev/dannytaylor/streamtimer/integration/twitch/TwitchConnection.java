@@ -59,7 +59,6 @@ public class TwitchConnection {
                     if (AuthConfig.instance.twitchChannels.value().getFirst().isBlank()) {
                         AuthConfig.instance.twitchChannels.value().set(0, credential.getUserName());
                         AuthConfig.toFile();
-                        TwitchIntegration.channel.setText(credential.getUserName());
                     }
                     for (String username : AuthConfig.instance.twitchChannels.value()) {
                         if (!username.isBlank()) {
@@ -74,17 +73,19 @@ public class TwitchConnection {
     }
 
     public void disconnect() {
-        new Thread(() -> {
-            if (this.hasClient()) {
-                for (String username : this.usernames) {
-                    if (this.isConnected(username)) this.leave(username);
-                }
-                StreamTimerLoggerImpl.info("[Twitch Integration] Removing Client...");
-                this.client.close();
-                this.client = null;
+        new Thread(this::closeConnections, "TwitchIntegrationConnectionThread").start();
+    }
+
+    public void closeConnections() {
+        if (this.hasClient()) {
+            for (String username : this.usernames) {
+                if (this.isConnected(username)) this.leave(username);
             }
-            this.setButtons();
-        }, "TwitchIntegrationConnectionThread").start();
+            StreamTimerLoggerImpl.info("[Twitch Integration] Removing Client...");
+            this.client.close();
+            this.client = null;
+        }
+        this.setButtons();
     }
 
     private void join(String channelName) {

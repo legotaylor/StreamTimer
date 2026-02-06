@@ -58,4 +58,11 @@ public class Tray {
             this.trayIcon.setToolTip(time);
         }
     }
+
+    public void close() {
+        if (!SystemTray.isSupported()) return;
+        try {
+            this.systemTray.remove(this.trayIcon);
+        } catch (Exception ignored) {}
+    }
 }

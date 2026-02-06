@@ -15,7 +15,6 @@ import dev.dannytaylor.streamtimer.config.RenderMode;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
 import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
-import dev.dannytaylor.streamtimer.logger.handler.UIHandler;
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
 import dev.dannytaylor.streamtimer.util.IntegerFilter;
 import dev.dannytaylor.streamtimer.util.StreamTimerRunnable;
@@ -47,8 +46,18 @@ public class GUI {
     public SetupGUI setupGUI;
     public static Tray tray;
 
-    public static final ArrayList<StreamTimerRunnable> runBeforeVisible = new ArrayList<>();
-    public static final ArrayList<StreamTimerRunnable> runOnConfigClose = new ArrayList<>();
+    private static final ArrayList<StreamTimerRunnable> runBeforeVisible = new ArrayList<>();
+    private static final ArrayList<StreamTimerRunnable> runOnConfigClose = new ArrayList<>();
+
+    public static boolean addBeforeVisible(String name, StreamTimerRunnable runnable) {
+        StreamTimerLoggerImpl.debug("[Run Before Visible] Added " + name);
+        return runBeforeVisible.add(runnable);
+    }
+
+    public static boolean addOnConfigClose(String name, StreamTimerRunnable runnable) {
+        StreamTimerLoggerImpl.debug("[Run On Config Close] Added " + name);
+        return runOnConfigClose.add(runnable);
+    }
 
     public GUI() {
         setup();
@@ -106,7 +115,9 @@ public class GUI {
         onBeforeVisible.add((mode) -> StreamTimerMain.gui.createFontConfigTab(mode));
         onBeforeVisible.add((mode) -> StreamTimerMain.gui.createTextColorConfigTab(mode));
         onBeforeVisible.add((mode) -> StreamTimerMain.gui.createBackgroundColorConfigTab(mode));
-        onBeforeVisible.addAll(GUI.runBeforeVisible);
+
+        onBeforeVisible.addAll(runBeforeVisible);
+
         onBeforeVisible.add((mode) -> StreamTimerMain.gui.createLogTab(mode));
         onBeforeVisible.add((mode) -> StreamTimerMain.gui.createLicenseTab(mode));
 
@@ -121,7 +132,13 @@ public class GUI {
         configureDialog.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                for (StreamTimerRunnable runnable : onConfigClose) runnable.run(renderMode);
+                for (StreamTimerRunnable runnable : onConfigClose) {
+                    try {
+                        runnable.run(renderMode);
+                    } catch (Exception error) {
+                        StreamTimerLoggerImpl.error("Failed to run onConfigClose runnable: " + error);
+                    }
+                }
                 configureButton.setEnabled(true);
             }
         });
@@ -228,7 +245,8 @@ public class GUI {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                StreamTimerMain.running = false;
+                tray.close();
+                StreamTimerMain.close();
             }
 
             @Override
@@ -257,9 +275,16 @@ public class GUI {
             }
         });
 
-        for (StreamTimerRunnable runnable : onBeforeVisible) runnable.run(renderMode);
+        for (StreamTimerRunnable runnable : onBeforeVisible) {
+            try {
+                runnable.run(renderMode);
+            } catch (Exception error) {
+                StreamTimerLoggerImpl.error("Failed to run onBeforeVisible runnable: " + error);
+            }
+        }
 
         this.window.setVisible(true);
+        StreamTimerMain.canStart = true;
         this.latch.countDown();
     }
 

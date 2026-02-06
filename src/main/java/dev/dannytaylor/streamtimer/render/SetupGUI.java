@@ -112,12 +112,12 @@ public class SetupGUI {
 
                 @Override
                 public void windowClosing(WindowEvent e) {
-                    System.exit(1);
+                    StreamTimerMain.canStart = false;
+                    StreamTimerMain.gui.latch.countDown();
                 }
 
                 @Override
                 public void windowClosed(WindowEvent e) {
-
                 }
 
                 @Override
