@@ -70,8 +70,12 @@ public class Timer {
     }
 
     public void stop() {
+        stop(true);
+    }
+
+    public void stop(boolean saveToFile) {
         this.running = false;
-        save(true);
+        save(saveToFile);
         StreamTimerLoggerImpl.info("Stopped Timer");
     }
 
@@ -94,7 +98,7 @@ public class Timer {
     }
 
     public void save(boolean toFile) {
-        if (toFile) StreamTimerLoggerImpl.info("Saving Timer to file");
-        StreamTimerConfig.instance.time.setValue(time, toFile);
+        StreamTimerConfig.instance.time.setValue(time, false);
+        if (toFile) StreamTimerMain.configSaveRequested = true;
     }
 }

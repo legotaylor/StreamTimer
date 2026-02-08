@@ -209,25 +209,37 @@ public class GUI {
             JCheckBox forceFocus = GUIWidgets.createCheckbox("Prevent minimize");
             forceFocus.setToolTipText("When enabled, the window will unminimize itself when minimized.");
             forceFocus.setSelected(StreamTimerConfig.instance.forceFocus.value());
-            forceFocus.addChangeListener(e -> StreamTimerConfig.instance.forceFocus.setValue(forceFocus.isSelected(), true));
+            forceFocus.addChangeListener(e -> {
+                StreamTimerConfig.instance.forceFocus.setValue(forceFocus.isSelected(), false);
+                StreamTimerMain.configSaveRequested = true;
+            });
             optionsRow.add(forceFocus);
         }
 
         JCheckBox reversed = GUIWidgets.createCheckbox("Count up");
         reversed.setToolTipText("When enabled, the timer counts up instead of down.");
         reversed.setSelected(StreamTimerConfig.instance.reversed.value());
-        reversed.addChangeListener(e -> StreamTimerConfig.instance.reversed.setValue(reversed.isSelected(), true));
+        reversed.addChangeListener(e -> {
+            StreamTimerConfig.instance.reversed.setValue(reversed.isSelected(), false);
+            StreamTimerMain.configSaveRequested = true;
+        });
         optionsRow.add(reversed);
 
         JCheckBox showMillis = GUIWidgets.createCheckbox("Show Milliseconds");
         showMillis.setSelected(StreamTimerConfig.instance.showMillis.value());
-        showMillis.addChangeListener(e -> StreamTimerConfig.instance.showMillis.setValue(showMillis.isSelected(), true));
+        showMillis.addChangeListener(e -> {
+            StreamTimerConfig.instance.showMillis.setValue(showMillis.isSelected(), false);
+            StreamTimerMain.configSaveRequested = true;
+        });
         optionsRow.add(showMillis);
 
         JCheckBox finishSound = GUIWidgets.createCheckbox("Finish Sound");
         finishSound.setToolTipText("When enabled, a sound will be played after the timer reaches 0.");
         finishSound.setSelected(StreamTimerConfig.instance.finishSound.value());
-        finishSound.addChangeListener(e -> StreamTimerConfig.instance.finishSound.setValue(finishSound.isSelected(), true));
+        finishSound.addChangeListener(e -> {
+            StreamTimerConfig.instance.finishSound.setValue(finishSound.isSelected(), false);
+            StreamTimerMain.configSaveRequested = true;
+        });
         optionsRow.add(finishSound);
 
         this.window.add(optionsRow, gbc);
@@ -258,11 +270,11 @@ public class GUI {
             @Override
             public void windowClosing(WindowEvent e) {
                 tray.close();
-                StreamTimerMain.close();
             }
 
             @Override
             public void windowClosed(WindowEvent e) {
+                StreamTimerMain.close();
             }
 
             @Override
@@ -420,16 +432,28 @@ public class GUI {
 
         fontCombo.addActionListener(f -> {
             FontValue fontValue = (FontValue) fontCombo.getSelectedItem();
-            if (fontValue != null) StreamTimerConfig.instance.font.setValue(fontValue.name, true);
+            if (fontValue != null) {
+                StreamTimerConfig.instance.font.setValue(fontValue.name, false);
+                StreamTimerMain.configSaveRequested = true;
+            }
         });
-        styleCombo.addActionListener(g -> StreamTimerConfig.instance.style.setValue(styleCombo.getSelectedIndex(), true));
+        styleCombo.addActionListener(g -> {
+            StreamTimerConfig.instance.style.setValue(styleCombo.getSelectedIndex(), false);
+            StreamTimerMain.configSaveRequested = true;
+        });
         sizeSpinner.addChangeListener(h -> {
             Integer size = (Integer) sizeSpinner.getValue();
-            if (size != null) StreamTimerConfig.instance.size.setValue(size, true);
+            if (size != null) {
+                StreamTimerConfig.instance.size.setValue(size, false);
+                StreamTimerMain.configSaveRequested = true;
+            }
         });
         alignCombo.addActionListener(i -> {
             FontAlignment alignment = (FontAlignment) alignCombo.getSelectedItem();
-            if (alignment != null) StreamTimerConfig.instance.alignText.setValue(alignment, true);
+            if (alignment != null) {
+                StreamTimerConfig.instance.alignText.setValue(alignment, false);
+                StreamTimerMain.configSaveRequested = true;
+            }
         });
         this.configureTabs.addTab("Font", tab);
     }
@@ -445,12 +469,18 @@ public class GUI {
             JCheckBox rainbow = GUIWidgets.createCheckbox("Rainbow Mode");
             rainbow.setToolTipText("When enabled, the timer text renders with a coloured effect.");
             rainbow.setSelected(StreamTimerConfig.instance.rainbow.value());
-            rainbow.addChangeListener(i -> StreamTimerConfig.instance.rainbow.setValue(rainbow.isSelected(), true));
+            rainbow.addChangeListener(i -> {
+                StreamTimerConfig.instance.rainbow.setValue(rainbow.isSelected(), false);
+                StreamTimerMain.configSaveRequested = true;
+            });
             textCheckboxPanel.add(rainbow);
             JCheckBox dimWhenStopped = GUIWidgets.createCheckbox("Dim when Timer Stopped");
             dimWhenStopped.setToolTipText("When enabled, the timer text renders at 50% colour intensity.");
             dimWhenStopped.setSelected(StreamTimerConfig.instance.dimWhenStopped.value());
-            dimWhenStopped.addChangeListener(i -> StreamTimerConfig.instance.dimWhenStopped.setValue(dimWhenStopped.isSelected(), true));
+            dimWhenStopped.addChangeListener(i -> {
+                StreamTimerConfig.instance.dimWhenStopped.setValue(dimWhenStopped.isSelected(), false);
+                StreamTimerMain.configSaveRequested = true;
+            });
             textCheckboxPanel.add(dimWhenStopped);
             textColorTab.add(textCheckboxPanel);
             textColorTab.add(Box.createVerticalStrut(6));
@@ -465,7 +495,8 @@ public class GUI {
     }
 
     private void onTextColorTabClose(RenderMode renderMode) {
-        StreamTimerConfig.instance.textColor.setValue(this.textColorChooser.getColor().getRGB(), true);
+        StreamTimerConfig.instance.textColor.setValue(this.textColorChooser.getColor().getRGB(), false);
+        StreamTimerMain.configSaveRequested = true;
     }
 
     private void createBackgroundColorTab(RenderMode renderMode) {
@@ -477,7 +508,10 @@ public class GUI {
             JCheckBox background = GUIWidgets.createCheckbox("Render Background");
             background.setToolTipText("When enabled, renders a solid coloured background which can be chroma-keyed out in some window capturing applications.");
             background.setSelected(StreamTimerConfig.instance.background.value());
-            background.addChangeListener(f -> StreamTimerConfig.instance.background.setValue(background.isSelected(), true));
+            background.addChangeListener(f -> {
+                StreamTimerConfig.instance.background.setValue(background.isSelected(), false);
+                StreamTimerMain.configSaveRequested = true;
+            });
             backgroundCheckboxPanel.add(background);
             backgroundColorTab.add(backgroundCheckboxPanel);
             backgroundColorTab.add(Box.createVerticalStrut(6));
@@ -491,7 +525,8 @@ public class GUI {
     }
 
     private void onBackgroundColorTabClose(RenderMode renderMode) {
-        StreamTimerConfig.instance.backgroundColor.setValue(this.backgroundColorChooser.getColor().getRGB(), true);
+        StreamTimerConfig.instance.backgroundColor.setValue(this.backgroundColorChooser.getColor().getRGB(), false);
+        StreamTimerMain.configSaveRequested = true;
     }
 
     private void createLogTab(RenderMode renderMode) {
@@ -567,15 +602,18 @@ public class GUI {
         tpsSpinner.setEnabled(!iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.isSelected());
 
         themeCombo.addActionListener(f -> {
-            StreamTimerConfig.instance.theme.setValue(WindowTheme.values()[themeCombo.getSelectedIndex()], true);
+            StreamTimerConfig.instance.theme.setValue(WindowTheme.values()[themeCombo.getSelectedIndex()], false);
+            StreamTimerMain.configSaveRequested = true;
             updateThemes(OsThemeDetector.getDetector().isDark());
         });
         tpsSpinner.addChangeListener(f -> {
-            StreamTimerConfig.instance.tps.setValue((Integer) tpsSpinner.getValue(), true);
+            StreamTimerConfig.instance.tps.setValue((Integer) tpsSpinner.getValue(), false);
+            StreamTimerMain.configSaveRequested = true;
         });
         iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.addChangeListener(f -> {
             boolean isSelected = iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.isSelected();
-            StreamTimerConfig.instance.iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpu.setValue(isSelected, true);
+            StreamTimerConfig.instance.iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpu.setValue(isSelected, false);
+            StreamTimerMain.configSaveRequested = true;
             tpsSpinner.setEnabled(!iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.isSelected());
         });
         this.configureTabs.addTab("Misc", tab);

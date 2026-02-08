@@ -75,14 +75,7 @@ public class TwitchConnection {
     }
 
     public void closeConnections() {
-        if (this.hasClient()) {
-            for (String username : this.usernames) {
-                if (this.isConnected(username)) this.leave(username);
-            }
-            StreamTimerLoggerImpl.info("[Twitch Integration] Removing Client...");
-            this.client.close();
-            this.client = null;
-        }
+        if (this.hasClient()) this.client.close();
         this.setButtons();
     }
 

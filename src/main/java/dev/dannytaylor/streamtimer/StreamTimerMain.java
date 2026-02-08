@@ -28,6 +28,7 @@ public class StreamTimerMain {
     public static ImageIcon icon;
     public static TextRenderer textRenderer;
     public static long lastSaved = System.nanoTime();
+    public static volatile boolean configSaveRequested;
     public static boolean canStart;
 
     public static void main(String[] args) {
@@ -62,22 +63,29 @@ public class StreamTimerMain {
                     }
                 }
             }
-            close();
         } catch (InterruptedException error) {
             StreamTimerLoggerImpl.error("Failed to start gui: " + error);
         }
+        exit();
     }
 
     public static void close() {
         running = false;
+    }
+
+    public static void exit() {
         StreamTimerLoggerImpl.info("Closing " + StaticVariables.name + "!");
-        timer.stop();
+        timer.stop(false);
         IntegrationRegistry.close();
-        try {
-            IntegrationRegistry.closeLatch.await();
-        } catch (Exception error) {
-            System.exit(1);
+        if (gui != null) {
+            if (gui.configWindow != null) gui.configWindow.dispose();
+            if (gui.window != null) gui.window.dispose();
+            if (gui.setupGUI != null) {
+                if (gui.setupGUI.window != null) gui.setupGUI.window.dispose();
+            }
+            gui = null;
         }
+        StreamTimerConfig.toFile();
         System.exit(0);
     }
 
@@ -90,8 +98,9 @@ public class StreamTimerMain {
 
     public static void autoSave() {
         long now = System.nanoTime();
-        if (now >= lastSaved + (Math.max(StreamTimerConfig.instance.saveSeconds.value(), 1) * 1000000000L)) {
+        if (configSaveRequested || now >= lastSaved + (Math.max(StreamTimerConfig.instance.saveSeconds.value(), 1) * 1000000000L)) {
             StreamTimerConfig.toFile();
+            configSaveRequested = false;
             lastSaved = now;
         }
     }
