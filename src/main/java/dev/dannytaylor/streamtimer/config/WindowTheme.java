@@ -22,22 +22,22 @@ public enum WindowTheme implements ConfigSerializableObject<String> {
     NIMBUS("Nimbus", new NimbusLookAndFeel()),
     METAL("Metal", new MetalLookAndFeel());
 
-    private final String name;
+    private final String display;
     private final LookAndFeel lightLaf;
     private final LookAndFeel darkLaf;
 
-    WindowTheme(String name, LookAndFeel lightLaf, LookAndFeel darkLaf) {
-        this.name = name;
+    WindowTheme(String display, LookAndFeel lightLaf, LookAndFeel darkLaf) {
+        this.display = display;
         this.lightLaf = lightLaf;
         this.darkLaf = darkLaf;
     }
 
-    WindowTheme(String name, LookAndFeel laf) {
-        this(name, laf, null);
+    WindowTheme(String display, LookAndFeel laf) {
+        this(display, laf, null);
     }
 
-    public String getName() {
-        return this.name;
+    public String getDisplay() {
+        return this.display;
     }
 
     public LookAndFeel getTheme(boolean isDark) {
@@ -61,7 +61,7 @@ public enum WindowTheme implements ConfigSerializableObject<String> {
 
     public static String[] getAllNames() {
         ArrayList<String> names = new ArrayList<>();
-        for (WindowTheme theme : values()) names.add(theme.getName());
+        for (WindowTheme theme : values()) names.add(theme.getDisplay());
         return names.toArray(new String[0]);
     }
 }

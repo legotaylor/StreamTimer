@@ -41,6 +41,7 @@ public class StreamTimerConfig extends ReflectiveConfig {
     public final TrackedValue<String> font = this.value("SansSerif");
     public final TrackedValue<Integer> style = this.value(1);
     public final TrackedValue<Integer> size = this.value(72);
+    public final TrackedValue<FontAlignment> alignText = this.value(FontAlignment.CENTER);
     public final TrackedValue<Boolean> rainbow = this.value(false);
     public final TrackedValue<Boolean> dimWhenStopped = this.value(true);
     public final TrackedValue<Boolean> finishSound = this.value(false);

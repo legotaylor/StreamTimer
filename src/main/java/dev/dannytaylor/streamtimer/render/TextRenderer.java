@@ -7,6 +7,7 @@
 
 package dev.dannytaylor.streamtimer.render;
 
+import dev.dannytaylor.streamtimer.config.FontAlignment;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.integration.websocket.WebSocketIntegration;
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
@@ -44,7 +45,8 @@ public class TextRenderer {
         graphics.setColor(new Color(StreamTimerConfig.instance.textColor.value(), true));
 
         FontMetrics fm = graphics.getFontMetrics();
-        int x = (this.width - fm.stringWidth(timeText)) / 2;
+        FontAlignment alignText = StreamTimerConfig.instance.alignText.value();
+        int x = alignText.equals(FontAlignment.RIGHT) ? (this.width - fm.stringWidth(timeText)) : (alignText.equals(FontAlignment.CENTER) ? (this.width - fm.stringWidth(timeText)) / 2 : 0);
         int y = (this.height - fm.getHeight()) / 2 + fm.getAscent();
 
         graphics.drawString(timeText, x, y);

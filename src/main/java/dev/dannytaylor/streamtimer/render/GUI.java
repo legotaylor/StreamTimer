@@ -9,6 +9,7 @@ package dev.dannytaylor.streamtimer.render;
 
 import com.jthemedetecor.OsThemeDetector;
 import dev.dannytaylor.streamtimer.StreamTimerMain;
+import dev.dannytaylor.streamtimer.config.FontAlignment;
 import dev.dannytaylor.streamtimer.config.RenderMode;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.config.WindowTheme;
@@ -407,12 +408,29 @@ public class GUI {
         JSpinner sizeSpinner = new JSpinner(new SpinnerNumberModel(StreamTimerConfig.instance.size.value().intValue(), 1, Integer.MAX_VALUE, 1));
         tab.add(sizeSpinner, gbc);
 
+        gbc.gridx = 0;
+        gbc.gridy++;
+        JLabel alignLabel = new JLabel("Alignment:");
+        alignLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        tab.add(alignLabel, gbc);
+        gbc.gridx = 1;
+        JComboBox<FontAlignment> alignCombo = new JComboBox<>(FontAlignment.values());
+        alignCombo.setSelectedItem(StreamTimerConfig.instance.alignText.value());
+        tab.add(alignCombo, gbc);
+
         fontCombo.addActionListener(f -> {
             FontValue fontValue = (FontValue) fontCombo.getSelectedItem();
             if (fontValue != null) StreamTimerConfig.instance.font.setValue(fontValue.name, true);
         });
         styleCombo.addActionListener(g -> StreamTimerConfig.instance.style.setValue(styleCombo.getSelectedIndex(), true));
-        sizeSpinner.addChangeListener(h -> StreamTimerConfig.instance.size.setValue((Integer) sizeSpinner.getValue(), true));
+        sizeSpinner.addChangeListener(h -> {
+            Integer size = (Integer) sizeSpinner.getValue();
+            if (size != null) StreamTimerConfig.instance.size.setValue(size, true);
+        });
+        alignCombo.addActionListener(i -> {
+            FontAlignment alignment = (FontAlignment) alignCombo.getSelectedItem();
+            if (alignment != null) StreamTimerConfig.instance.alignText.setValue(alignment, true);
+        });
         this.configureTabs.addTab("Font", tab);
     }
 
@@ -526,7 +544,7 @@ public class GUI {
         tab.add(themeLabel, gbc);
         gbc.gridx = 1;
         JComboBox<String> themeCombo = new JComboBox<>(WindowTheme.getAllNames());
-        themeCombo.setSelectedItem(StreamTimerConfig.instance.theme.value().getName());
+        themeCombo.setSelectedItem(StreamTimerConfig.instance.theme.value().getDisplay());
         tab.add(themeCombo, gbc);
 
         gbc.gridx = 0;
