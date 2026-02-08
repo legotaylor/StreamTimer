@@ -508,7 +508,7 @@ public class GUI {
         gbc.gridwidth = 2;
         gbc.gridy++;
         JCheckBox iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox = GUIWidgets.createCheckbox("I paid for the whole damn CPU, now give me the whole damn CPU!", StreamTimerConfig.instance.iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpu.value());
-        iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.setToolTipText("Removes tps limit. This does not effect timer precision, this is purely for rendering.");
+        iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.setToolTipText("Removes tps limit. This does not effect timer precision, this is purely for updating/rendering.");
         tab.add(setCentered(iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox), gbc);
         gbc.gridwidth = 1;
 

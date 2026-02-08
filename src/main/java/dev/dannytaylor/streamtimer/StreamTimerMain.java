@@ -90,7 +90,7 @@ public class StreamTimerMain {
 
     public static void autoSave() {
         long now = System.nanoTime();
-        if (now >= lastSaved + (StreamTimerConfig.instance.saveSeconds.value() * 1000000000L)) {
+        if (now >= lastSaved + (Math.max(StreamTimerConfig.instance.saveSeconds.value(), 1) * 1000000000L)) {
             StreamTimerConfig.toFile();
             lastSaved = now;
         }
