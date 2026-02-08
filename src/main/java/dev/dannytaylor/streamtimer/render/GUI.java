@@ -373,7 +373,7 @@ public class GUI {
         sizeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         tab.add(sizeLabel, gbc);
         gbc.gridx = 1;
-        JSpinner sizeSpinner = new JSpinner(new SpinnerNumberModel(StreamTimerConfig.instance.size.value().intValue(), 1, 256, 1));
+        JSpinner sizeSpinner = new JSpinner(new SpinnerNumberModel(StreamTimerConfig.instance.size.value().intValue(), 1, Integer.MAX_VALUE, 1));
         tab.add(sizeSpinner, gbc);
 
         fontCombo.addActionListener(f -> StreamTimerConfig.instance.font.setValue((String) fontCombo.getSelectedItem(), true));
