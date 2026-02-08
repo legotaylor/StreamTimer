@@ -38,7 +38,9 @@ public class TextRenderer {
         graphics.fill(new Rectangle(0, 0, this.width, this.height));
         graphics.setComposite(AlphaComposite.SrcOver);
 
-        graphics.setFont(new Font(StreamTimerConfig.instance.font.value(), StreamTimerConfig.instance.style.value(), StreamTimerConfig.instance.size.value()));
+        Font font = new Font(StreamTimerConfig.instance.font.value(), StreamTimerConfig.instance.style.value(), StreamTimerConfig.instance.size.value());
+        if (font.canDisplayUpTo("01234567890:.") == -1) graphics.setFont(font);
+        else graphics.setFont(new Font(graphics.getFont().getName(), font.getStyle(), font.getSize()));
         graphics.setColor(new Color(StreamTimerConfig.instance.textColor.value(), true));
 
         FontMetrics fm = graphics.getFontMetrics();

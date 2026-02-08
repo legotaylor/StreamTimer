@@ -7,8 +7,6 @@
 
 package dev.dannytaylor.streamtimer.render;
 
-import com.jogamp.opengl.GLCapabilities;
-import com.jogamp.opengl.GLProfile;
 import com.jthemedetecor.OsThemeDetector;
 import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.RenderMode;
@@ -350,13 +348,38 @@ public class GUI {
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.gridx = 0;
         gbc.gridy = 0;
+
         JLabel fontLabel = new JLabel("Font:");
         fontLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         tab.add(fontLabel, gbc);
+
         gbc.gridx = 1;
-        JComboBox<String> fontCombo = new JComboBox<>(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
-        fontCombo.setSelectedItem(StreamTimerConfig.instance.font.value());
+        ArrayList<FontValue> fonts = new ArrayList<>();
+        FontValue selectedFontValue = null;
+        for (String fontName : GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()) {
+            Font font = new Font(fontName, Font.PLAIN, 12);
+            if (font.canDisplayUpTo("01234567890:.") == -1) {
+                FontValue fontValue = new FontValue(fontName, font.canDisplayUpTo(fontName) == - 1);
+                if (fontName.equals(StreamTimerConfig.instance.font.value())) selectedFontValue = fontValue;
+                fonts.add(fontValue);
+            }
+        }
+        JComboBox<FontValue> fontCombo = new JComboBox<>(fonts.toArray(new FontValue[0]));
+        fontCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                Component label = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof FontValue && ((FontValue)value).canDisplayName) {
+                    Font font = label.getFont();
+                    label.setFont(new Font(((FontValue)value).name, font.getStyle(), font.getSize()));
+                }
+                return label;
+            }
+        });
+        if (selectedFontValue != null) fontCombo.setSelectedItem(selectedFontValue);
+        else System.err.println("Selected font either could not be found, or is not compatible.");
         tab.add(fontCombo, gbc);
+
         gbc.gridx = 0;
         gbc.gridy++;
         JLabel styleLabel = new JLabel("Style:");
@@ -365,6 +388,14 @@ public class GUI {
         gbc.gridx = 1;
         String[] styles = {"Plain", "Bold", "Italic", "Bold Italic"};
         JComboBox<String> styleCombo = new JComboBox<>(styles);
+        styleCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                Component label = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                label.setFont(label.getFont().deriveFont(index));
+                return label;
+            }
+        });
         styleCombo.setSelectedIndex(StreamTimerConfig.instance.style.value());
         tab.add(styleCombo, gbc);
         gbc.gridx = 0;
@@ -376,7 +407,10 @@ public class GUI {
         JSpinner sizeSpinner = new JSpinner(new SpinnerNumberModel(StreamTimerConfig.instance.size.value().intValue(), 1, Integer.MAX_VALUE, 1));
         tab.add(sizeSpinner, gbc);
 
-        fontCombo.addActionListener(f -> StreamTimerConfig.instance.font.setValue((String) fontCombo.getSelectedItem(), true));
+        fontCombo.addActionListener(f -> {
+            FontValue fontValue = (FontValue) fontCombo.getSelectedItem();
+            if (fontValue != null) StreamTimerConfig.instance.font.setValue(fontValue.name, true);
+        });
         styleCombo.addActionListener(g -> StreamTimerConfig.instance.style.setValue(styleCombo.getSelectedIndex(), true));
         sizeSpinner.addChangeListener(h -> StreamTimerConfig.instance.size.setValue((Integer) sizeSpinner.getValue(), true));
         this.configureTabs.addTab("Font", tab);
@@ -527,5 +561,20 @@ public class GUI {
             tpsSpinner.setEnabled(!iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.isSelected());
         });
         this.configureTabs.addTab("Misc", tab);
+    }
+
+    public static class FontValue {
+        public final String name;
+        public final boolean canDisplayName;
+
+        public FontValue(String name, boolean canDisplayName) {
+            this.name = name;
+            this.canDisplayName = canDisplayName;
+        }
+
+        @Override
+        public String toString() {
+            return this.name;
+        }
     }
 }
