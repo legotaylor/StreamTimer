@@ -143,7 +143,7 @@ public class WebSocketIntegration {
         gbc.fill = GridBagConstraints.NONE;
         JCheckBox autoConnect = GUIWidgets.createCheckbox("Automatically connect on Startup", StreamTimerConfig.instance.webSocketAutoConnect.value());
         autoConnect.addChangeListener(l -> {
-            StreamTimerConfig.instance.webSocketAutoConnect.setValue(autoConnect.isSelected(), true);
+            StreamTimerConfig.instance.webSocketAutoConnect.setValue(autoConnect.isSelected(), false);
         });
         tab.add(autoConnect, gbc);
 
@@ -156,7 +156,7 @@ public class WebSocketIntegration {
         connectButton.addActionListener(l -> {
             disableWidgets();
             if (portField != null) {
-                StreamTimerConfig.instance.webSocketPort.setValue(portField.getText().isBlank() ? StreamTimerConfig.instance.webSocketPort.getDefaultValue() : Integer.parseInt(portField.getText()), true);
+                StreamTimerConfig.instance.webSocketPort.setValue(portField.getText().isBlank() ? StreamTimerConfig.instance.webSocketPort.getDefaultValue() : Integer.parseInt(portField.getText()), false);
                 portField.setText(String.valueOf(StreamTimerConfig.instance.webSocketPort.value()));
             }
             updateUrl(true);

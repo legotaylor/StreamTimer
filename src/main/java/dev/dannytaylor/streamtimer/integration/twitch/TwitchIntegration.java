@@ -211,7 +211,7 @@ public class TwitchIntegration {
             StreamTimerConfig.instance.twitchTimes.commandEnabled.setValue((TwitchPermission) commandCombo.getSelectedItem(), false);
             StreamTimerConfig.instance.twitchTimes.tierOneEnabled.setValue(tierOne.isSelected(), false);
             StreamTimerConfig.instance.twitchTimes.tierTwoEnabled.setValue(tierTwo.isSelected(), false);
-            StreamTimerConfig.instance.twitchTimes.tierThreeEnabled.setValue(tierThree.isSelected(), true);
+            StreamTimerConfig.instance.twitchTimes.tierThreeEnabled.setValue(tierThree.isSelected(), false);
         });
         tab.add(applyChanges, gbc);
 
@@ -423,8 +423,8 @@ public class TwitchIntegration {
         } catch (Exception error) {
             StreamTimerLoggerImpl.error("[Twitch Integration] Failed to encrypt secret: " + error);
         }
-        AuthConfig.instance.twitchId.setValue(clientId.getText(), true);
-        AuthConfig.instance.twitchSecret.setValue(secret, true);
+        AuthConfig.instance.twitchId.setValue(clientId.getText(), false);
+        AuthConfig.instance.twitchSecret.setValue(secret, false);
         AuthConfig.instance.twitchChannel.setValue(channel.getText(), true);
     }
 

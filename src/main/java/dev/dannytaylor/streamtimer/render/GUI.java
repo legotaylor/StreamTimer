@@ -151,6 +151,7 @@ public class GUI {
                         StreamTimerLoggerImpl.error("Failed to run onConfigClose runnable: " + error);
                     }
                 }
+                StreamTimerMain.configSaveRequested = true;
                 configureButton.setEnabled(true);
             }
         });
@@ -434,25 +435,21 @@ public class GUI {
             FontValue fontValue = (FontValue) fontCombo.getSelectedItem();
             if (fontValue != null) {
                 StreamTimerConfig.instance.font.setValue(fontValue.name, false);
-                StreamTimerMain.configSaveRequested = true;
             }
         });
         styleCombo.addActionListener(g -> {
             StreamTimerConfig.instance.style.setValue(styleCombo.getSelectedIndex(), false);
-            StreamTimerMain.configSaveRequested = true;
         });
         sizeSpinner.addChangeListener(h -> {
             Integer size = (Integer) sizeSpinner.getValue();
             if (size != null) {
                 StreamTimerConfig.instance.size.setValue(size, false);
-                StreamTimerMain.configSaveRequested = true;
             }
         });
         alignCombo.addActionListener(i -> {
             FontAlignment alignment = (FontAlignment) alignCombo.getSelectedItem();
             if (alignment != null) {
                 StreamTimerConfig.instance.alignText.setValue(alignment, false);
-                StreamTimerMain.configSaveRequested = true;
             }
         });
         this.configureTabs.addTab("Font", tab);
@@ -471,7 +468,6 @@ public class GUI {
             rainbow.setSelected(StreamTimerConfig.instance.rainbow.value());
             rainbow.addChangeListener(i -> {
                 StreamTimerConfig.instance.rainbow.setValue(rainbow.isSelected(), false);
-                StreamTimerMain.configSaveRequested = true;
             });
             textCheckboxPanel.add(rainbow);
             JCheckBox dimWhenStopped = GUIWidgets.createCheckbox("Dim when Timer Stopped");
@@ -479,7 +475,6 @@ public class GUI {
             dimWhenStopped.setSelected(StreamTimerConfig.instance.dimWhenStopped.value());
             dimWhenStopped.addChangeListener(i -> {
                 StreamTimerConfig.instance.dimWhenStopped.setValue(dimWhenStopped.isSelected(), false);
-                StreamTimerMain.configSaveRequested = true;
             });
             textCheckboxPanel.add(dimWhenStopped);
             textColorTab.add(textCheckboxPanel);
@@ -496,7 +491,6 @@ public class GUI {
 
     private void onTextColorTabClose(RenderMode renderMode) {
         StreamTimerConfig.instance.textColor.setValue(this.textColorChooser.getColor().getRGB(), false);
-        StreamTimerMain.configSaveRequested = true;
     }
 
     private void createBackgroundColorTab(RenderMode renderMode) {
@@ -510,7 +504,6 @@ public class GUI {
             background.setSelected(StreamTimerConfig.instance.background.value());
             background.addChangeListener(f -> {
                 StreamTimerConfig.instance.background.setValue(background.isSelected(), false);
-                StreamTimerMain.configSaveRequested = true;
             });
             backgroundCheckboxPanel.add(background);
             backgroundColorTab.add(backgroundCheckboxPanel);
@@ -526,7 +519,6 @@ public class GUI {
 
     private void onBackgroundColorTabClose(RenderMode renderMode) {
         StreamTimerConfig.instance.backgroundColor.setValue(this.backgroundColorChooser.getColor().getRGB(), false);
-        StreamTimerMain.configSaveRequested = true;
     }
 
     private void createLogTab(RenderMode renderMode) {
@@ -603,17 +595,14 @@ public class GUI {
 
         themeCombo.addActionListener(f -> {
             StreamTimerConfig.instance.theme.setValue(WindowTheme.values()[themeCombo.getSelectedIndex()], false);
-            StreamTimerMain.configSaveRequested = true;
             updateThemes(OsThemeDetector.getDetector().isDark());
         });
         tpsSpinner.addChangeListener(f -> {
             StreamTimerConfig.instance.tps.setValue((Integer) tpsSpinner.getValue(), false);
-            StreamTimerMain.configSaveRequested = true;
         });
         iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.addChangeListener(f -> {
             boolean isSelected = iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.isSelected();
             StreamTimerConfig.instance.iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpu.setValue(isSelected, false);
-            StreamTimerMain.configSaveRequested = true;
             tpsSpinner.setEnabled(!iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.isSelected());
         });
         this.configureTabs.addTab("Misc", tab);
