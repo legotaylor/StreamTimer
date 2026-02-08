@@ -89,7 +89,7 @@ public class WebSocketIntegration {
         tab.add(widthLabel, gbc);
         gbc.gridx = 2;
         gbc.weightx = 0;
-        JTextField width = new JTextField("576");
+        JTextField width = new JTextField(String.valueOf(StreamTimerMain.textRenderer.getWidth()));
         width.setEditable(false);
         tab.add(width, gbc);
 
@@ -102,7 +102,7 @@ public class WebSocketIntegration {
         tab.add(heightLabel, gbc);
         gbc.gridx = 2;
         gbc.weightx = 0;
-        JTextField height = new JTextField("144");
+        JTextField height = new JTextField(String.valueOf(StreamTimerMain.textRenderer.getHeight()));
         height.setEditable(false);
         tab.add(height, gbc);
 
@@ -234,7 +234,7 @@ public class WebSocketIntegration {
 
     public static void updateUrl(boolean useConfig) {
         if (browserSourceUrl != null) {
-            browserSourceUrl.setText("file:///" + Paths.get(StaticVariables.name + "Assets").toAbsolutePath() + "\\WebSocketClient.html" + "?type=ws&host=localhost&port=" + (!useConfig && portField != null ? (portField.getText().isBlank() ? StreamTimerConfig.instance.webSocketPort.getDefaultValue() : portField.getText()) : StreamTimerConfig.instance.webSocketPort.value()));
+            browserSourceUrl.setText("file:///" + Paths.get(StaticVariables.name + "Assets").toAbsolutePath() + "\\WebSocketClient.html" + "?type=ws&host=localhost&port=" + (!useConfig && portField != null ? (portField.getText().isBlank() ? StreamTimerConfig.instance.webSocketPort.getDefaultValue() : portField.getText()) : StreamTimerConfig.instance.webSocketPort.value()) + "&width=" + StreamTimerMain.textRenderer.getHeight() + "&height=" + StreamTimerMain.textRenderer.getHeight());
         }
     }
 
@@ -242,10 +242,13 @@ public class WebSocketIntegration {
         return connection != null;
     }
 
+    public static void sendProcessedFrame(byte[] frame) {
+        sendFrame(frame);
+    }
+
     public static void sendFrame(byte[] frame) {
         if (isConnected()) connection.sendFrame(frame);
     }
-
 
     public static boolean isPortAvailable(int port) {
         try (ServerSocket socket = new ServerSocket(port)) {

@@ -15,11 +15,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class GLShaderRegistry {
+public class ShaderRegistry {
     public final int vert;
     public final int frag;
 
-    public GLShaderRegistry(GL2 gl) throws IOException {
+    public ShaderRegistry(GL2 gl) throws IOException {
         this.vert = compileShader(gl, Path.of(StaticVariables.name + "Assets/vertex.glsl"), GL2.GL_VERTEX_SHADER);
         this.frag = compileShader(gl, Path.of(StaticVariables.name + "Assets/fragment.glsl"), GL2.GL_FRAGMENT_SHADER);
     }

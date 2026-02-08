@@ -21,7 +21,6 @@ import dev.dannytaylor.streamtimer.util.IntegerFilter;
 import dev.dannytaylor.streamtimer.util.StreamTimerRunnable;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.text.AbstractDocument;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -44,6 +43,8 @@ public class GUI {
     public JButton configureButton;
     public JTabbedPane configureTabs;
     public boolean isDark;
+
+    public Renderer glRenderer;
 
     public CountDownLatch latch = new CountDownLatch(1);
 
@@ -83,6 +84,7 @@ public class GUI {
     }
 
     public void create(RenderMode renderMode) {
+        if (renderMode.usesGL()) this.glRenderer = new Renderer();
         boolean isDialog = renderMode.getRenderType().equals(RenderMode.RenderType.DIALOG);
         this.window = isDialog ? new JDialog((Frame) null, StaticVariables.name, false) : new JFrame(StaticVariables.name);
         this.window.setLayout(new GridBagLayout());
@@ -94,11 +96,7 @@ public class GUI {
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weighty = 1;
-        if (renderMode.usesGL()) {
-            GLCapabilities capabilities = new GLCapabilities(GLProfile.get(GLProfile.GL2));
-            capabilities.setAlphaBits(8);
-            this.timer = new GLRendererPanel(capabilities);
-        } else this.timer = new TextRendererPanel();
+        this.timer = new TimerRendererPanel(renderMode.usesGL());
         this.timer.setPreferredSize(new Dimension(576, 144));
         this.window.add(this.timer, gbc);
         gbc.gridy = 1;
@@ -497,9 +495,36 @@ public class GUI {
         themeCombo.setSelectedItem(StreamTimerConfig.instance.theme.value().getName());
         tab.add(themeCombo, gbc);
 
+        gbc.gridx = 0;
+        gbc.gridy++;
+        JLabel tpsLabel = new JLabel("TPS:");
+        tpsLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        tab.add(tpsLabel, gbc);
+        gbc.gridx = 1;
+        JSpinner tpsSpinner = new JSpinner(new SpinnerNumberModel(StreamTimerConfig.instance.tps.value().intValue(), 1, 65536, 1));
+        tab.add(tpsSpinner, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        gbc.gridy++;
+        JCheckBox iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox = GUIWidgets.createCheckbox("I paid for the whole damn CPU, now give me the whole damn CPU!", StreamTimerConfig.instance.iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpu.value());
+        iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.setToolTipText("Removes tps limit. This does not effect timer precision, this is purely for rendering.");
+        tab.add(setCentered(iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox), gbc);
+        gbc.gridwidth = 1;
+
+        tpsSpinner.setEnabled(!iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.isSelected());
+
         themeCombo.addActionListener(f -> {
             StreamTimerConfig.instance.theme.setValue(WindowTheme.values()[themeCombo.getSelectedIndex()], true);
             updateThemes(OsThemeDetector.getDetector().isDark());
+        });
+        tpsSpinner.addChangeListener(f -> {
+            StreamTimerConfig.instance.tps.setValue((Integer) tpsSpinner.getValue(), true);
+        });
+        iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.addChangeListener(f -> {
+            boolean isSelected = iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.isSelected();
+            StreamTimerConfig.instance.iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpu.setValue(isSelected, true);
+            tpsSpinner.setEnabled(!iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpuCheckbox.isSelected());
         });
         this.configureTabs.addTab("Misc", tab);
     }

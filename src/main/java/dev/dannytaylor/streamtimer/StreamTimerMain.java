@@ -13,6 +13,7 @@ import dev.dannytaylor.streamtimer.integration.IntegrationRegistry;
 import dev.dannytaylor.streamtimer.integration.twitch.TwitchIntegration;
 import dev.dannytaylor.streamtimer.logger.StreamTimerLoggerImpl;
 import dev.dannytaylor.streamtimer.render.GUI;
+import dev.dannytaylor.streamtimer.render.Renderer;
 import dev.dannytaylor.streamtimer.render.TextRenderer;
 import dev.dannytaylor.streamtimer.timer.Timer;
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
@@ -26,7 +27,7 @@ public class StreamTimerMain {
     public static GUI gui;
     public static ImageIcon icon;
     public static TextRenderer textRenderer;
-    public static int saveTicks;
+    public static long lastSaved = System.nanoTime();
     public static boolean canStart;
 
     public static void main(String[] args) {
@@ -42,15 +43,18 @@ public class StreamTimerMain {
                 long nextTick = System.nanoTime();
                 while (running) {
                     try {
-                        long now = System.nanoTime();
-                        if (now >= nextTick) {
-                            tick();
-                            long tickRate = 1000000000 / 20;
-                            nextTick += tickRate;
-                            if (System.nanoTime() > nextTick + tickRate * 20) nextTick = System.nanoTime();
-                        } else {
-                            long sleepTime = (nextTick - now) / 1000000L;
-                            if (sleepTime > 0) Thread.sleep(sleepTime);
+                        if (StreamTimerConfig.instance.iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpu.value()) tick();
+                        else {
+                            long now = System.nanoTime();
+                            if (now >= nextTick) {
+                                tick();
+                                long tickRate = 1000000000L / StreamTimerConfig.instance.tps.value();
+                                nextTick += tickRate;
+                                if (System.nanoTime() > nextTick + 1000000000L) nextTick = System.nanoTime();
+                            } else {
+                                long sleepTime = (nextTick - now) / 1000000L;
+                                if (sleepTime > 0) Thread.sleep(sleepTime);
+                            }
                         }
                     } catch (Exception error) {
                         StreamTimerLoggerImpl.error("Error whilst ticking: " + error);
@@ -79,18 +83,16 @@ public class StreamTimerMain {
 
     public static void tick() {
         timer.tick();
-        String time = TimerUtils.getTime();
-        StreamTimerMain.textRenderer.render(time);
-        gui.updateTimer(time);
-
+        Renderer.tick(TimerUtils.getTime());
         TwitchIntegration.setIdSecretEnabled(!TwitchIntegration.twitch.hasClient());
+        autoSave();
+    }
 
-        if (timer.isRunning() && StreamTimerConfig.instance.saveTicks.value() > 0) {
-            if (saveTicks < StreamTimerConfig.instance.saveTicks.value()) saveTicks++;
-            else {
-                StreamTimerConfig.toFile();
-                saveTicks = 0;
-            }
+    public static void autoSave() {
+        long now = System.nanoTime();
+        if (now >= lastSaved + (StreamTimerConfig.instance.saveSeconds.value() * 1000000000L)) {
+            StreamTimerConfig.toFile();
+            lastSaved = now;
         }
     }
 
@@ -98,6 +100,6 @@ public class StreamTimerMain {
         StreamTimerLoggerImpl.bootstrap();
         running = true;
         timer = new Timer();
-        textRenderer = new TextRenderer(576, 144);
+        textRenderer = new TextRenderer(StreamTimerConfig.instance.renderWidth.value(), StreamTimerConfig.instance.renderHeight.value());
     }
 }

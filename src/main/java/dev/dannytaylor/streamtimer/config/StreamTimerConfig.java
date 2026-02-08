@@ -33,7 +33,7 @@ public class StreamTimerConfig extends ReflectiveConfig {
 
     public final TrackedValue<Long> time = this.value(21600000L);
     public final TrackedValue<Boolean> reversed = this.value(false);
-    public final TrackedValue<Integer> saveTicks = this.value(1200);
+    public final TrackedValue<Integer> saveSeconds = this.value(60);
 
     public final TrackedValue<Boolean> background = this.value(false);
     public final TrackedValue<Integer> backgroundColor = this.value(-16711936);
@@ -50,6 +50,8 @@ public class StreamTimerConfig extends ReflectiveConfig {
     public final TrackedValue<String> addMinutes = this.value("00");
     public final TrackedValue<String> addSeconds = this.value("00");
 
+    public final TrackedValue<Integer> renderWidth = this.value(576);
+    public final TrackedValue<Integer> renderHeight = this.value(144);
     public final TrackedValue<Integer> webSocketPort = this.value(34251);
     public final TrackedValue<Boolean> webSocketAutoConnect = this.value(false);
 
@@ -85,6 +87,8 @@ public class StreamTimerConfig extends ReflectiveConfig {
     }
 
     public final TrackedValue<WindowTheme> theme = this.value(WindowTheme.FLAT_AUTO);
+    public final TrackedValue<Boolean> iPaidForTheWholeDamnCpuGiveMeTheWholeDamnCpu  = this.value(false);
+    public final TrackedValue<Integer> tps = this.value(20);
 
     public final TrackedValue<Boolean> debug = this.value(false);
 

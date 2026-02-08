@@ -7,9 +7,9 @@
 
 package dev.dannytaylor.streamtimer.render;
 
-import dev.dannytaylor.streamtimer.StreamTimerMain;
 import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.integration.websocket.WebSocketIntegration;
+import dev.dannytaylor.streamtimer.timer.TimerUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -24,7 +24,8 @@ public class TextRenderer {
     public TextRenderer(int width, int height) {
         this.width = width;
         this.height = height;
-        this.framebuffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        this.framebuffer = new BufferedImage(this.width, this.height, BufferedImage.TYPE_INT_ARGB);
+        this.render(TimerUtils.getTime());
     }
 
     public void render(String timeText) {
@@ -101,6 +102,6 @@ public class TextRenderer {
     }
 
     private static void sendFrameToWebSocket(byte[] frame) {
-        if (WebSocketIntegration.isConnected()) WebSocketIntegration.sendFrame(frame);
+        if (WebSocketIntegration.isConnected()) WebSocketIntegration.sendProcessedFrame(frame);
     }
 }

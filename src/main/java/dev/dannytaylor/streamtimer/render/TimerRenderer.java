@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-public class GLRenderer implements GLEventListener {
+public class TimerRenderer implements GLEventListener {
     private int texID;
     private ByteBuffer buffer;
     private long startTime;
@@ -33,7 +33,7 @@ public class GLRenderer implements GLEventListener {
         GL2 gl = drawable.getGL().getGL2();
 
         try {
-            GLShaderRegistry shaderRegistry = new GLShaderRegistry(gl);
+            ShaderRegistry shaderRegistry = new ShaderRegistry(gl);
             this.shaderProgram = shaderRegistry.linkProgram(gl);
             this.startTime = System.currentTimeMillis();
         } catch (Exception error) {
@@ -70,6 +70,7 @@ public class GLRenderer implements GLEventListener {
             GL2 gl = drawable.getGL().getGL2();
             int windowWidth = drawable.getSurfaceWidth();
             int windowHeight = drawable.getSurfaceHeight();
+            gl.glViewport(0, 0, windowWidth, windowHeight);
 
             StreamTimerMain.textRenderer.updateByteBuffer(buffer);
 
@@ -157,10 +158,11 @@ public class GLRenderer implements GLEventListener {
             }
             this.sendFrameToWebSocket(frame);
         }
+        Renderer.updateFrame();
     }
 
     private void sendFrameToWebSocket(byte[] frame) {
-        if (WebSocketIntegration.isConnected()) WebSocketIntegration.sendFrame(frame);
+        if (WebSocketIntegration.isConnected()) WebSocketIntegration.sendProcessedFrame(frame);
     }
 
     @Override

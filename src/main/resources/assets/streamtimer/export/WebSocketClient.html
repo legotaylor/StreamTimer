@@ -25,17 +25,22 @@
   </style>
 </head>
 <body>
-  <canvas id="videoCanvas" width="576" height="144"></canvas>
+  <canvas id="videoCanvas"></canvas>
 
   <script>
     const canvas = document.getElementById('videoCanvas');
     const ctx = canvas.getContext('2d');
 
     const urlParams = new URLSearchParams(window.location.search);
-    let wsType = urlParams.get('type') || "ws";
-    let wsHost = urlParams.get('host') || "localhost";
-    let wsPort = urlParams.get('port') || 34251;
+    const wsType = urlParams.get('type') || "ws";
+    const wsHost = urlParams.get('host') || "localhost";
+    const wsPort = urlParams.get('port') || 34251;
     const wsUrl = `${wsType}://${wsHost}:${wsPort}`;
+    const canvasWidth = urlParams.get('width') || 576;
+    const canvasHeight = urlParams.get('height') || 144;
+
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
     
     let socket;
 
@@ -54,7 +59,7 @@
       socket.onmessage = function(event) {
         if (event.data instanceof ArrayBuffer) {
           const frame = new Uint8Array(event.data);
-          const imageData = new ImageData(new Uint8ClampedArray(frame), 576, 144);
+          const imageData = new ImageData(new Uint8ClampedArray(frame), canvasWidth, canvasHeight);
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.putImageData(imageData, 0, 0);
         }
