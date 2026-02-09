@@ -66,6 +66,6 @@ public class Renderer {
     public static void tick(String time) {
         StreamTimerMain.textRenderer.render(time);
         instance.render();
-        StreamTimerMain.gui.updateTimer(time);
+        StreamTimerMain.gui.updateTimer();
     }
 }

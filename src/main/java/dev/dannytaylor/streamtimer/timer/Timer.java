@@ -19,10 +19,12 @@ import java.nio.file.Path;
 public class Timer {
     private boolean running;
     private boolean finished;
-    private long time = StreamTimerConfig.instance.time.value();
+    private long time;
     private long lastTickTime = 0L;
 
     public Timer() {
+        this.time = StreamTimerConfig.instance.time.value();
+        this.finished = this.time == 0L;
     }
 
     public void tick() {

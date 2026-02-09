@@ -92,6 +92,7 @@ public class StreamTimerMain {
     public static void tick() {
         timer.tick();
         Renderer.tick(TimerUtils.getTime());
+        gui.tick();
         TwitchIntegration.setIdSecretEnabled(!TwitchIntegration.twitch.hasClient());
         autoSave();
     }

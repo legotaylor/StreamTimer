@@ -103,6 +103,7 @@ public class GUI {
         gbc.weighty = 0;
         JPanel configureRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
         this.toggleButton = GUIWidgets.createButton("START");
+        this.toggleButton.setEnabled(!shouldDisableToggleButton());
         this.toggleButton.setToolTipText("Starts the timer");
         this.toggleButton.addActionListener(e -> {
             TimerUtils.toggleTimer();
@@ -333,12 +334,16 @@ public class GUI {
 
     public void updateTimer(long seconds, boolean add, boolean save) {
         TimerUtils.setTimer(seconds, add, save);
-        updateTimer(null);
+        updateTimerPanel();
     }
 
-    public void updateTimer(String time) {
+    public void updateTimer() {
+        updateTimerPanel();
+        tray.updateTimer(TimerUtils.getTime(TimerUtils.getMillis(), false));
+    }
+
+    public void updateTimerPanel() {
         if (this.timer instanceof TimerPanel) ((TimerPanel) this.timer).update();
-        tray.updateTimer(time);
     }
 
     public static JComponent setCentered(JComponent component) {
@@ -621,5 +626,14 @@ public class GUI {
         public String toString() {
             return this.name;
         }
+    }
+
+    public void tick() {
+        boolean shouldDisable = shouldDisableToggleButton();
+        if (this.toggleButton.isEnabled() == shouldDisable) this.toggleButton.setEnabled(!shouldDisable);
+    }
+
+    public static boolean shouldDisableToggleButton() {
+        return StreamTimerMain.timer.isFinished() && !StreamTimerConfig.instance.reversed.value();
     }
 }

@@ -8,6 +8,7 @@
 package dev.dannytaylor.streamtimer.render;
 
 import dev.dannytaylor.streamtimer.StreamTimerMain;
+import dev.dannytaylor.streamtimer.config.StreamTimerConfig;
 import dev.dannytaylor.streamtimer.data.StaticVariables;
 import dev.dannytaylor.streamtimer.timer.TimerUtils;
 
@@ -53,9 +54,14 @@ public class Tray {
         } catch (Exception ignored) {}
     }
 
+    private long lastUpdated = System.nanoTime();
     public void updateTimer(String time) {
-        if (time != null && this.trayIcon != null) {
-            this.trayIcon.setToolTip(time);
+        if (this.trayIcon != null) {
+            long now = System.nanoTime();
+            if (now >= (this.lastUpdated + 1000000000L)) { // limit updates to every second
+                this.trayIcon.setToolTip(time != null ? time : StaticVariables.name);
+                this.lastUpdated = now;
+            }
         }
     }
 
